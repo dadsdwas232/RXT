@@ -1,5 +1,5 @@
--- [[ 👑 RXT SERVER - V7 CLASSIC RESET ]] --
--- Back to: Classic Speed & Jump (Original Logic)
+-- [[ 👑 RXT SERVER - V8 LEGACY POWER ]] --
+-- Back to: First Version Speed & Jump Logic (100% Working)
 -- Features: Purple X Close | Auto Discord Alerts | Radioactive Farm | Underground
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -11,7 +11,7 @@ local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
--- [[ ⚙️ المتغيرات ]] --
+-- [[ ⚙️ المتغيرات الأساسية ]] --
 local stealthSpeedEnabled = false
 local speedValue = 50
 local noclipEnabled = false
@@ -20,7 +20,6 @@ local infJumpEnabled = false
 local noRagdollEnabled = false
 local radioactiveFarmEnabled = false
 local savedPosition = nil
-local originalJumpPower = 50
 
 -- [[ 🛠️ وظائف النظام الخلفية ]] --
 
@@ -31,29 +30,34 @@ player.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- [2] محرك السرعة والقفز (النسخة الأولى)
-RunService.RenderStepped:Connect(function()
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        local hum = player.Character.Humanoid
-        
-        -- السرعة الكلاسيكية
-        if stealthSpeedEnabled then
-            hum.WalkSpeed = speedValue
-        else
-            hum.WalkSpeed = 16 -- السرعة العادية
-        end
+-- [2] محرك السرعة والقفز (النسخة القديمة الأصلية)
+task.spawn(function()
+    while task.wait() do
+        pcall(function()
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                local hum = player.Character.Humanoid
+                
+                -- سرعة النسخة الأولى
+                if stealthSpeedEnabled then
+                    hum.WalkSpeed = speedValue
+                else
+                    hum.WalkSpeed = 16
+                end
+                
+                -- قفز النسخة الأولى (الجمب باور)
+                if infJumpEnabled then
+                    hum.JumpPower = 50 -- تأكيد القوة العادية
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                        player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+                    end
+                end
 
-        -- القفز اللانهائي الكلاسيكي
-        if infJumpEnabled then
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-                player.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+                -- النزول تحت الأرض (تعديل بسيط للهبوط)
+                if radioactiveFarmEnabled and player.Character:FindFirstChild("HumanoidRootPart") then
+                    player.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, -0.01, 0)
+                end
             end
-        end
-        
-        -- النزول تحت الأرض للتخفي
-        if radioactiveFarmEnabled and player.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, -0.05, 0)
-        end
+        end)
     end
 end)
 
@@ -74,10 +78,10 @@ task.spawn(function()
     end
 end)
 
--- [[ 🎨 بناء واجهة V7 ]] --
+-- [[ 🎨 بناء الواجهة V8 ]] --
 
-if CoreGui:FindFirstChild("RXT_Master_V7") then CoreGui["RXT_Master_V7"]:Destroy() end
-local ScreenGui = Instance.new("ScreenGui", CoreGui); ScreenGui.Name = "RXT_Master_V7"
+if CoreGui:FindFirstChild("RXT_Master_V8") then CoreGui["RXT_Master_V8"]:Destroy() end
+local ScreenGui = Instance.new("ScreenGui", CoreGui); ScreenGui.Name = "RXT_Master_V8"
 
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 360, 0, 520); Main.Position = UDim2.new(0.5, -180, 0.5, -260)
@@ -102,7 +106,7 @@ Instance.new("UIStroke", OpenBtn).Color = Color3.fromRGB(150, 100, 255)
 CloseBtn.MouseButton1Click:Connect(function() Main.Visible = false; OpenBtn.Visible = true end)
 OpenBtn.MouseButton1Click:Connect(function() Main.Visible = true; OpenBtn.Visible = false end)
 
--- تنبيهات الدسكورد التلقائية
+-- تنبيهات الدسكورد
 local function ShowAlert(text)
     local Alert = Instance.new("TextLabel", ScreenGui)
     Alert.Size = UDim2.new(0, 320, 0, 45); Alert.Position = UDim2.new(0.5, -160, 1, -70)
@@ -141,7 +145,7 @@ local function AddTab(t, pg)
 end
 AddTab("MAIN", P1); AddTab("EVENT", P2); AddTab("WORLD", P3); AddTab("TP", P4)
 
--- نظام الأزرار
+-- نظام الأزرار مع التحديث
 local function AddToggle(parent, txt, state, cb)
     local b = Instance.new("TextButton", parent); b.Size = UDim2.new(1, 0, 0, 40); b.Text = txt .. " : OFF"; b.BackgroundColor3 = Color3.fromRGB(35, 30, 60); b.TextColor3 = Color3.new(1,1,1); b.Font = Enum.Font.GothamBold; Instance.new("UICorner", b)
     local function Update()
@@ -152,11 +156,11 @@ local function AddToggle(parent, txt, state, cb)
     return b
 end
 
--- [ الأزرار والمميزات ]
+-- [ الأزرار ]
 AddToggle(P1, "🚫 No Ragdoll", noRagdollEnabled, function(s) noRagdollEnabled = s end)
 AddToggle(P1, "🧱 NoClip", noclipEnabled, function(s) noclipEnabled = s end)
 AddToggle(P1, "🦘 Infinity Jump", infJumpEnabled, function(s) infJumpEnabled = s end)
-local SpdInput = Instance.new("TextBox", P1); SpdInput.Size = UDim2.new(1, 0, 0, 35); SpdInput.PlaceholderText = "Speed (16-200)"; SpdInput.BackgroundColor3 = Color3.fromRGB(20, 20, 30); SpdInput.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SpdInput)
+local SpdInput = Instance.new("TextBox", P1); SpdInput.Size = UDim2.new(1, 0, 0, 35); SpdInput.PlaceholderText = "Speed (16-100)"; SpdInput.BackgroundColor3 = Color3.fromRGB(20, 20, 30); SpdInput.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SpdInput)
 AddToggle(P1, "🚀 Stealth Speed", stealthSpeedEnabled, function(s) stealthSpeedEnabled = s; speedValue = tonumber(SpdInput.Text) or 50 end)
 
 AddToggle(P2, "☢️ Radioactive Farm", radioactiveFarmEnabled, function(s) radioactiveFarmEnabled = s end)
@@ -185,6 +189,6 @@ bTP.MouseButton1Click:Connect(function()
     end
 end)
 
-local Footer = Instance.new("TextLabel", Main); Footer.Size = UDim2.new(1, 0, 0, 30); Footer.Position = UDim2.new(0, 0, 1, -30); Footer.Text = "RXT SERVER | V7 ORIGINAL SPEED"; Footer.TextColor3 = Color3.fromRGB(150, 100, 255); Footer.BackgroundTransparency = 1; Footer.Font = Enum.Font.GothamBold
+local Footer = Instance.new("TextLabel", Main); Footer.Size = UDim2.new(1, 0, 0, 30); Footer.Position = UDim2.new(0, 0, 1, -30); Footer.Text = "RXT SERVER | V8 LEGACY MODE"; Footer.TextColor3 = Color3.fromRGB(150, 100, 255); Footer.BackgroundTransparency = 1; Footer.Font = Enum.Font.GothamBold
 
-print("👑 RXT MASTER V7 LOADED - CLASSIC SPEED ACTIVE")
+print("👑 RXT MASTER V8 LOADED - LEGACY SPEED & JUMP")
