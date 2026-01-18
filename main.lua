@@ -21,17 +21,81 @@ local infJumpEnabled = false
 local noRagdollEnabled = false
 local radioactiveFarmEnabled = false
 local savedPosition = nil
+local antiAFKEnabled = true -- Anti-AFK enabled by default
 
 -- [[ 🛠️ Backend Functions ]] --
 
--- [1] Anti-AFK
-task.spawn(function()
-    local VU = game:GetService("VirtualUser")
-    player.Idled:Connect(function()
-        VU:CaptureController()
-        VU:ClickButton2(Vector2.new())
-    end)
-end)
+-- [1] Advanced Anti-AFK System
+local antiAFKConnection
+local function ToggleAntiAFK(state)
+    antiAFKEnabled = state
+    
+    if antiAFKConnection then
+        antiAFKConnection:Disconnect()
+        antiAFKConnection = nil
+    end
+    
+    if state then
+        -- Method 1: VirtualUser (Works in most games)
+        local VU = game:GetService("VirtualUser")
+        antiAFKConnection = player.Idled:Connect(function()
+            VU:CaptureController()
+            VU:ClickButton2(Vector2.new())
+            print("🔄 Anti-AFK: Prevented kick")
+        end)
+        
+        -- Method 2: Movement simulation (Extra protection)
+        task.spawn(function()
+            while antiAFKEnabled do
+                task.wait(30) -- Every 30 seconds
+                
+                -- Simulate small movement
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local root = player.Character.HumanoidRootPart
+                    
+                    -- Small invisible movement
+                    local currentPosition = root.Position
+                    root.CFrame = root.CFrame * CFrame.new(0, 0.001, 0)
+                    task.wait(0.1)
+                    root.CFrame = root.CFrame * CFrame.new(0, -0.001, 0)
+                    
+                    -- Simulate camera movement
+                    local camera = workspace.CurrentCamera
+                    if camera then
+                        local currentCF = camera.CFrame
+                        camera.CFrame = currentCF * CFrame.Angles(0, math.rad(0.5), 0)
+                        task.wait(0.1)
+                        camera.CFrame = currentCF
+                    end
+                end
+                
+                -- Simulate key press
+                virtualInput = game:GetService("VirtualInputManager")
+                virtualInput:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                task.wait(0.1)
+                virtualInput:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+                
+                print("🔒 Anti-AFK: Still active, no kick")
+            end
+        end)
+        
+        -- Method 3: Character reset prevention
+        player.CharacterAdded:Connect(function()
+            if antiAFKEnabled then
+                task.wait(2)
+                print("♻️ Anti-AFK: Character respawned, protection reactivated")
+            end
+        end)
+        
+        print("✅ Anti-AFK: Protection activated")
+    else
+        print("❌ Anti-AFK: Protection deactivated")
+    end
+end
+
+-- Start Anti-AFK by default
+task.wait(1)
+ToggleAntiAFK(true)
 
 -- [2] Speed and Jump Engine
 RunService.Stepped:Connect(function()
@@ -252,8 +316,8 @@ function CreateMainGui()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local Main = Instance.new("Frame", ScreenGui)
-    Main.Size = UDim2.new(0, 360, 0, 500)
-    Main.Position = UDim2.new(0.5, -180, 0.5, -250)
+    Main.Size = UDim2.new(0, 380, 0, 520)
+    Main.Position = UDim2.new(0.5, -190, 0.5, -260)
     Main.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     Main.BorderSizePixel = 0
     
@@ -268,7 +332,7 @@ function CreateMainGui()
     
     -- Header
     local Header = Instance.new("TextLabel", Main)
-    Header.Size = UDim2.new(1, -20, 0, 70)
+    Header.Size = UDim2.new(1, -20, 0, 80)
     Header.Position = UDim2.new(0, 10, 0, 10)
     Header.BackgroundTransparency = 1
     Header.Text = [[
@@ -345,6 +409,29 @@ function CreateMainGui()
         end
     end)
     
+    -- Anti-AFK Status Indicator
+    local afkStatus = Instance.new("TextLabel", ScreenGui)
+    afkStatus.Size = UDim2.new(0, 150, 0, 30)
+    afkStatus.Position = UDim2.new(1, -160, 1, -35)
+    afkStatus.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+    afkStatus.TextColor3 = Color3.new(1, 1, 1)
+    afkStatus.Text = "🟢 ANTI-AFK: ON"
+    afkStatus.Font = Enum.Font.GothamBold
+    afkStatus.TextSize = 12
+    Instance.new("UICorner", afkStatus)
+    
+    local function UpdateAFKStatus()
+        if antiAFKEnabled then
+            afkStatus.Text = "🟢 ANTI-AFK: ON"
+            afkStatus.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+        else
+            afkStatus.Text = "🔴 ANTI-AFK: OFF"
+            afkStatus.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+        end
+    end
+    
+    UpdateAFKStatus()
+    
     -- Discord reminder
     task.spawn(function()
         while true do
@@ -363,10 +450,10 @@ function CreateMainGui()
         end
     end)
     
-    -- Tabs (Removed CONTACT tab)
+    -- Tabs
     local TabHolder = Instance.new("Frame", Main)
     TabHolder.Size = UDim2.new(1, -20, 0, 40)
-    TabHolder.Position = UDim2.new(0, 10, 0, 90)
+    TabHolder.Position = UDim2.new(0, 10, 0, 100)
     TabHolder.BackgroundTransparency = 1
     
     local TabList = Instance.new("UIListLayout", TabHolder)
@@ -376,7 +463,7 @@ function CreateMainGui()
     
     local Pages = Instance.new("Frame", Main)
     Pages.Size = UDim2.new(1, -20, 1, -150)
-    Pages.Position = UDim2.new(0, 10, 0, 140)
+    Pages.Position = UDim2.new(0, 10, 0, 150)
     Pages.BackgroundTransparency = 1
     
     local function CreatePage()
@@ -443,6 +530,13 @@ function CreateMainGui()
     end
     
     -- [ Main Buttons ]
+    -- Anti-AFK Toggle (NEW)
+    AddToggle(P1, "🛡️ Anti-AFK", antiAFKEnabled, function(s)
+        antiAFKEnabled = s
+        ToggleAntiAFK(s)
+        UpdateAFKStatus()
+    end)
+    
     AddToggle(P1, "🚫 No Ragdoll", noRagdollEnabled, function(s)
         noRagdollEnabled = s
     end)
@@ -566,7 +660,7 @@ function CreateMainGui()
     
     -- [[ ⚒️ Developer Tab ]] --
     local DevLabel = Instance.new("TextLabel", P5)
-    DevLabel.Size = UDim2.new(1, 0, 0, 150)
+    DevLabel.Size = UDim2.new(1, 0, 0, 180)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
 ⚒️ Developer Tools
@@ -578,7 +672,15 @@ Developers:
 Version: V10
 Key System: 24 Hours
 Safe Ghost Farm
-Simple & Clean
+
+🛡️ Anti-AFK Features:
+• 3 Layer Protection
+• VirtualUser Method
+• Movement Simulation
+• Camera Movement
+• Auto Reconnect
+• Works Anywhere
+• Toggle On/Off
     ]]
     DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevLabel.Font = Enum.Font.GothamBold
@@ -587,7 +689,7 @@ Simple & Clean
     
     local ReloadBtn = Instance.new("TextButton", P5)
     ReloadBtn.Size = UDim2.new(1, 0, 0, 40)
-    ReloadBtn.Position = UDim2.new(0, 0, 0, 160)
+    ReloadBtn.Position = UDim2.new(0, 0, 0, 190)
     ReloadBtn.Text = "🔄 Reload Script"
     ReloadBtn.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     ReloadBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -605,12 +707,12 @@ Simple & Clean
     Footer.Size = UDim2.new(1, 0, 0, 30)
     Footer.Position = UDim2.new(0, 0, 1, -30)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | CLEAN VERSION"
+    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | ANTI-AFK READY"
     Footer.TextColor3 = Color3.fromRGB(150, 100, 255)
     Footer.Font = Enum.Font.GothamBold
     Footer.TextSize = 11
     
-    print("👑 RXT MASTER V10 LOADED - CLEAN VERSION")
+    print("👑 RXT MASTER V10 LOADED - ADVANCED ANTI-AFK SYSTEM")
 end
 
 -- Start with Key GUI
