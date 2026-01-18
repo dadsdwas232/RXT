@@ -7,12 +7,10 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local Lighting = game:GetService("Lighting")
-local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
 -- [[ 🔑 Key System ]] --
 local validKeys = {}
-local webhookURL = "https://discord.com/api/webhooks/1462554040633266217/BoaIVF4se11rul1HJS7RTtESHd9hP0v-6ZYLPm6S82-uWFIC62g2X9k4jjxZ6dcvkDvV"
 
 -- [[ ⚙️ Settings ]] --
 local stealthSpeedEnabled = false
@@ -84,86 +82,6 @@ task.spawn(function()
     end
 end)
 
--- [[ 🔧 Improved Webhook Function ]] --
-local function SendDiscordWebhook(title, description, color, webhookType, extraData)
-    pcall(function()
-        local url = webhookURL
-        
-        -- Create Roblox profile link
-        local robloxProfile = "https://www.roblox.com/users/" .. player.UserId .. "/profile"
-        
-        local embed = {
-            ["title"] = title,
-            ["description"] = description,
-            ["color"] = color,
-            ["fields"] = {},
-            ["footer"] = {
-                ["text"] = "RXT Script V10 | " .. os.date("%Y/%m/%d %I:%M:%S")
-            },
-            ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
-        }
-        
-        -- Add user information
-        table.insert(embed.fields, {
-            ["name"] = "👤 Username",
-            ["value"] = player.Name,
-            ["inline"] = true
-        })
-        
-        table.insert(embed.fields, {
-            ["name"] = "🆔 User ID",
-            ["value"] = tostring(player.UserId),
-            ["inline"] = true
-        })
-        
-        table.insert(embed.fields, {
-            ["name"] = "🔗 Roblox Profile",
-            ["value"] = "[Click Here](" .. robloxProfile .. ")",
-            ["inline"] = true
-        })
-        
-        table.insert(embed.fields, {
-            ["name"] = "🎮 Game",
-            ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
-            ["inline"] = false
-        })
-        
-        table.insert(embed.fields, {
-            ["name"] = "🆔 Game ID",
-            ["value"] = tostring(game.PlaceId),
-            ["inline"] = true
-        })
-        
-        -- Add extra data if exists
-        if extraData then
-            for _, data in pairs(extraData) do
-                table.insert(embed.fields, data)
-            end
-        end
-        
-        -- Final data
-        local data = {
-            ["username"] = "RXT Script Logger",
-            ["avatar_url"] = "https://cdn.discordapp.com/attachments/123456789/987654321/rxt_logo.png",
-            ["embeds"] = {embed}
-        }
-        
-        -- Convert to JSON
-        local jsonData = HttpService:JSONEncode(data)
-        
-        -- Send request
-        local success, response = pcall(function()
-            return HttpService:PostAsync(url, jsonData, Enum.HttpContentType.ApplicationJson)
-        end)
-        
-        if success then
-            print("✅ Webhook sent successfully: " .. title)
-        else
-            warn("❌ Failed to send webhook: " .. tostring(response))
-        end
-    end)
-end
-
 -- [[ 🎨 Key GUI ]] --
 local function CreateKeyGui()
     if CoreGui:FindFirstChild("RXT_KeyGUI") then
@@ -183,160 +101,103 @@ local function CreateKeyGui()
     
     -- Main Window
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 500, 0, 450)
-    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -225)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    MainFrame.Size = UDim2.new(0, 400, 0, 300)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = KeyGui
     
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 25)
+    UICorner.CornerRadius = UDim.new(0, 15)
     UICorner.Parent = MainFrame
     
     local UIStroke = Instance.new("UIStroke")
-    UIStroke.Color = Color3.fromRGB(180, 130, 255)
-    UIStroke.Thickness = 4
+    UIStroke.Color = Color3.fromRGB(150, 100, 255)
+    UIStroke.Thickness = 3
     UIStroke.Parent = MainFrame
-    
-    -- Try multiple image loading methods
-    local imageIds = {
-        "rbxassetid://86991492020004",
-        "http://www.roblox.com/asset/?id=86991492020004",
-        "https://www.roblox.com/asset/?id=86991492020004"
-    }
-    
-    -- Top Left Image
-    local TopLeftImage = Instance.new("ImageLabel")
-    TopLeftImage.Size = UDim2.new(0, 90, 0, 90)
-    TopLeftImage.Position = UDim2.new(0.03, 0, 0.03, 0)
-    TopLeftImage.BackgroundTransparency = 1
-    TopLeftImage.Image = imageIds[1]
-    TopLeftImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
-    TopLeftImage.ImageTransparency = 0.3
-    TopLeftImage.Parent = MainFrame
-    
-    -- Try to load image with different methods
-    task.spawn(function()
-        for i, imgUrl in ipairs(imageIds) do
-            pcall(function()
-                TopLeftImage.Image = imgUrl
-                wait(0.5)
-                if TopLeftImage.ImageTransparency < 0.9 then
-                    break
-                end
-            end)
-        end
-    end)
-    
-    -- Top Right Image
-    local TopRightImage = Instance.new("ImageLabel")
-    TopRightImage.Size = UDim2.new(0, 90, 0, 90)
-    TopRightImage.Position = UDim2.new(0.97, -90, 0.03, 0)
-    TopRightImage.BackgroundTransparency = 1
-    TopRightImage.Image = imageIds[1]
-    TopRightImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
-    TopRightImage.ImageTransparency = 0.3
-    TopRightImage.Parent = MainFrame
     
     -- Main Title
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0.8, 0, 0, 120)
-    Title.Position = UDim2.new(0.1, 0, 0.1, 0)
+    Title.Size = UDim2.new(0.9, 0, 0, 80)
+    Title.Position = UDim2.new(0.05, 0, 0.05, 0)
     Title.BackgroundTransparency = 1
     Title.Text = "🔐 RXT SCRIPT V10\n━━━━━━━━━━━━━━━━━━\n24 HOUR KEY SYSTEM"
-    Title.TextColor3 = Color3.fromRGB(200, 150, 255)
-    Title.Font = Enum.Font.GothamBlack
-    Title.TextSize = 30
+    Title.TextColor3 = Color3.fromRGB(170, 120, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 20
     Title.TextXAlignment = Enum.TextXAlignment.Center
     Title.Parent = MainFrame
     
-    -- Center Image
-    local CenterImage = Instance.new("ImageLabel")
-    CenterImage.Size = UDim2.new(0, 140, 0, 140)
-    CenterImage.Position = UDim2.new(0.5, -70, 0.35, 0)
-    CenterImage.BackgroundTransparency = 1
-    CenterImage.Image = imageIds[1]
-    CenterImage.Parent = MainFrame
-    
     -- Key Section
     local KeyFrame = Instance.new("Frame")
-    KeyFrame.Size = UDim2.new(0.9, 0, 0, 120)
-    KeyFrame.Position = UDim2.new(0.05, 0, 0.65, 0)
-    KeyFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+    KeyFrame.Size = UDim2.new(0.9, 0, 0, 80)
+    KeyFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+    KeyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
     KeyFrame.Parent = MainFrame
     
     local KeyUICorner = Instance.new("UICorner")
-    KeyUICorner.CornerRadius = UDim.new(0, 20)
+    KeyUICorner.CornerRadius = UDim.new(0, 12)
     KeyUICorner.Parent = KeyFrame
     
     local KeyLabel = Instance.new("TextLabel")
-    KeyLabel.Size = UDim2.new(1, 0, 0, 50)
+    KeyLabel.Size = UDim2.new(1, 0, 0, 30)
     KeyLabel.BackgroundTransparency = 1
-    KeyLabel.Text = "🔑 ENTER KEY: RXT24 (24 HOURS)"
+    KeyLabel.Text = "🔑 ENTER KEY: RXT24"
     KeyLabel.TextColor3 = Color3.new(1, 1, 1)
-    KeyLabel.Font = Enum.Font.GothamBlack
-    KeyLabel.TextSize = 20
+    KeyLabel.Font = Enum.Font.GothamBold
+    KeyLabel.TextSize = 16
     KeyLabel.Parent = KeyFrame
     
     local KeyBox = Instance.new("TextBox")
-    KeyBox.Size = UDim2.new(0.9, 0, 0, 60)
+    KeyBox.Size = UDim2.new(0.9, 0, 0, 40)
     KeyBox.Position = UDim2.new(0.05, 0, 0.5, 0)
-    KeyBox.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+    KeyBox.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     KeyBox.TextColor3 = Color3.new(1, 1, 1)
-    KeyBox.Font = Enum.Font.GothamBlack
-    KeyBox.TextSize = 20
+    KeyBox.Font = Enum.Font.GothamBold
+    KeyBox.TextSize = 16
     KeyBox.PlaceholderText = "Type RXT24 here..."
     KeyBox.Text = ""
     KeyBox.Parent = KeyFrame
     
     local KeyBoxCorner = Instance.new("UICorner")
-    KeyBoxCorner.CornerRadius = UDim.new(0, 15)
+    KeyBoxCorner.CornerRadius = UDim.new(0, 10)
     KeyBoxCorner.Parent = KeyBox
     
     -- Activate Button
     local ActivateBtn = Instance.new("TextButton")
-    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 70)
-    ActivateBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
-    ActivateBtn.BackgroundColor3 = Color3.fromRGB(140, 90, 240)
-    ActivateBtn.Text = "⚡ ACTIVATE SCRIPT NOW"
+    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 50)
+    ActivateBtn.Position = UDim2.new(0.05, 0, 0.75, 0)
+    ActivateBtn.BackgroundColor3 = Color3.fromRGB(120, 70, 220)
+    ActivateBtn.Text = "⚡ ACTIVATE SCRIPT"
     ActivateBtn.TextColor3 = Color3.new(1, 1, 1)
-    ActivateBtn.Font = Enum.Font.GothamBlack
-    ActivateBtn.TextSize = 24
+    ActivateBtn.Font = Enum.Font.GothamBold
+    ActivateBtn.TextSize = 18
     ActivateBtn.Parent = MainFrame
     
     local ActivateCorner = Instance.new("UICorner")
-    ActivateCorner.CornerRadius = UDim.new(0, 20)
+    ActivateCorner.CornerRadius = UDim.new(0, 12)
     ActivateCorner.Parent = ActivateBtn
-    
-    -- Gradient Effect
-    local UIGradient = Instance.new("UIGradient")
-    UIGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 90, 240)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 140, 255))
-    })
-    UIGradient.Rotation = 45
-    UIGradient.Parent = ActivateBtn
     
     -- Status Message
     local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(0.9, 0, 0, 40)
-    StatusLabel.Position = UDim2.new(0.05, 0, 0.95, 0)
+    StatusLabel.Size = UDim2.new(0.9, 0, 0, 30)
+    StatusLabel.Position = UDim2.new(0.05, 0, 0.9, 0)
     StatusLabel.BackgroundTransparency = 1
     StatusLabel.Text = "⌛ Enter key to activate the script"
     StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     StatusLabel.Font = Enum.Font.Gotham
-    StatusLabel.TextSize = 16
+    StatusLabel.TextSize = 14
     StatusLabel.Parent = MainFrame
     
     -- Developers Text
     local DevText = Instance.new("TextLabel")
-    DevText.Size = UDim2.new(1, 0, 0, 50)
-    DevText.Position = UDim2.new(0, 0, 1, -50)
+    DevText.Size = UDim2.new(1, 0, 0, 30)
+    DevText.Position = UDim2.new(0, 0, 1, -30)
     DevText.BackgroundTransparency = 1
-    DevText.Text = "⚒️ Developed by 3zf & RXT | V10 | Key: RXT24"
-    DevText.TextColor3 = Color3.fromRGB(180, 130, 255)
-    DevText.Font = Enum.Font.GothamBlack
-    DevText.TextSize = 15
+    DevText.Text = "⚒️ Developed by 3zf & RXT | V10"
+    DevText.TextColor3 = Color3.fromRGB(150, 100, 255)
+    DevText.Font = Enum.Font.GothamBold
+    DevText.TextSize = 12
     DevText.Parent = MainFrame
     
     -- Activation Function
@@ -344,31 +205,6 @@ local function CreateKeyGui()
         local enteredKey = KeyBox.Text:upper():gsub("%s+", "")
         
         if enteredKey == "RXT24" then
-            -- Send activation webhook
-            SendDiscordWebhook(
-                "✅ NEW SCRIPT ACTIVATION",
-                "User activated RXT Script V10",
-                65280, -- Green
-                "activation",
-                {
-                    {
-                        ["name"] = "🔑 Key Used",
-                        ["value"] = "RXT24",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "⏰ Key Duration",
-                        ["value"] = "24 Hours",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "🕐 Activation Time",
-                        ["value"] = os.date("%I:%M:%S %p"),
-                        ["inline"] = true
-                    }
-                }
-            )
-            
             StatusLabel.Text = "✅ Activated Successfully! Loading..."
             StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
             
@@ -388,26 +224,18 @@ local function CreateKeyGui()
             ActivateBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
             
             task.wait(1)
-            ActivateBtn.Text = "⚡ ACTIVATE SCRIPT NOW"
-            ActivateBtn.BackgroundColor3 = Color3.fromRGB(140, 90, 240)
+            ActivateBtn.Text = "⚡ ACTIVATE SCRIPT"
+            ActivateBtn.BackgroundColor3 = Color3.fromRGB(120, 70, 220)
         end
     end)
     
     -- Button Hover Effects
     ActivateBtn.MouseEnter:Connect(function()
-        game:GetService("TweenService"):Create(
-            ActivateBtn,
-            TweenInfo.new(0.3),
-            {BackgroundColor3 = Color3.fromRGB(160, 110, 250)}
-        ):Play()
+        ActivateBtn.BackgroundColor3 = Color3.fromRGB(140, 90, 240)
     end)
     
     ActivateBtn.MouseLeave:Connect(function()
-        game:GetService("TweenService"):Create(
-            ActivateBtn,
-            TweenInfo.new(0.3),
-            {BackgroundColor3 = Color3.fromRGB(140, 90, 240)}
-        ):Play()
+        ActivateBtn.BackgroundColor3 = Color3.fromRGB(120, 70, 220)
     end)
     
     return KeyGui
@@ -424,85 +252,63 @@ function CreateMainGui()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local Main = Instance.new("Frame", ScreenGui)
-    Main.Size = UDim2.new(0, 450, 0, 650)
-    Main.Position = UDim2.new(0.5, -225, 0.5, -325)
-    Main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    Main.Size = UDim2.new(0, 360, 0, 500)
+    Main.Position = UDim2.new(0.5, -180, 0.5, -250)
+    Main.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     Main.BorderSizePixel = 0
     
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 25)
+    UICorner.CornerRadius = UDim.new(0, 15)
     UICorner.Parent = Main
     
     local UIStroke = Instance.new("UIStroke")
-    UIStroke.Color = Color3.fromRGB(180, 130, 255)
-    UIStroke.Thickness = 4
+    UIStroke.Color = Color3.fromRGB(150, 100, 255)
+    UIStroke.Thickness = 3
     UIStroke.Parent = Main
     
-    -- Header with Images
-    local Header = Instance.new("Frame", Main)
-    Header.Size = UDim2.new(1, -20, 0, 100)
+    -- Header
+    local Header = Instance.new("TextLabel", Main)
+    Header.Size = UDim2.new(1, -20, 0, 70)
     Header.Position = UDim2.new(0, 10, 0, 10)
     Header.BackgroundTransparency = 1
-    
-    -- Left Image
-    local LeftImage = Instance.new("ImageLabel", Header)
-    LeftImage.Size = UDim2.new(0, 80, 0, 80)
-    LeftImage.Position = UDim2.new(0, 0, 0, 10)
-    LeftImage.BackgroundTransparency = 1
-    LeftImage.Image = "rbxassetid://86991492020004"
-    LeftImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
-    
-    -- Right Image
-    local RightImage = Instance.new("ImageLabel", Header)
-    RightImage.Size = UDim2.new(0, 80, 0, 80)
-    RightImage.Position = UDim2.new(1, -80, 0, 10)
-    RightImage.BackgroundTransparency = 1
-    RightImage.Image = "rbxassetid://86991492020004"
-    RightImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
-    
-    -- Title
-    local Title = Instance.new("TextLabel", Header)
-    Title.Size = UDim2.new(1, -170, 1, 0)
-    Title.Position = UDim2.new(0, 90, 0, 0)
-    Title.BackgroundTransparency = 1
-    Title.Text = [[
+    Header.Text = [[
 👑 RXT SERVER V10
 ━━━━━━━━━━━━━━━━
 ⚡ GHOST FARM FIX
 ⚒️ 3zf & RXT
 🔐 Key: RXT24
     ]]
-    Title.TextColor3 = Color3.fromRGB(200, 150, 255)
-    Title.Font = Enum.Font.GothamBlack
-    Title.TextSize = 18
-    Title.TextYAlignment = Enum.TextYAlignment.Top
+    Header.TextColor3 = Color3.fromRGB(170, 120, 255)
+    Header.Font = Enum.Font.GothamBold
+    Header.TextSize = 14
+    Header.TextYAlignment = Enum.TextYAlignment.Top
     
     -- Close Button
     local CloseBtn = Instance.new("TextButton", Main)
-    CloseBtn.Size = UDim2.new(0, 45, 0, 45)
-    CloseBtn.Position = UDim2.new(1, -55, 0, 20)
+    CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+    CloseBtn.Position = UDim2.new(1, -45, 0, 15)
     CloseBtn.Text = "✕"
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(230, 80, 80)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
     CloseBtn.TextColor3 = Color3.new(1, 1, 1)
-    CloseBtn.Font = Enum.Font.GothamBlack
-    CloseBtn.TextSize = 24
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 20
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
     
     -- Floating Open Button
     local OpenBtn = Instance.new("TextButton", ScreenGui)
-    OpenBtn.Size = UDim2.new(0, 75, 0, 75)
-    OpenBtn.Position = UDim2.new(0, 30, 0.5, -37.5)
-    OpenBtn.BackgroundColor3 = Color3.fromRGB(50, 40, 90)
+    OpenBtn.Size = UDim2.new(0, 60, 0, 60)
+    OpenBtn.Position = UDim2.new(0, 20, 0.5, -30)
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 30, 70)
     OpenBtn.Text = "RXT\nV10"
-    OpenBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
-    OpenBtn.Font = Enum.Font.GothamBlack
-    OpenBtn.TextSize = 18
+    OpenBtn.TextColor3 = Color3.fromRGB(170, 120, 255)
+    OpenBtn.Font = Enum.Font.GothamBold
+    OpenBtn.TextSize = 16
     OpenBtn.Visible = false
     Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
     
     local OpenStroke = Instance.new("UIStroke", OpenBtn)
-    OpenStroke.Color = Color3.fromRGB(180, 130, 255)
-    OpenStroke.Thickness = 3
+    OpenStroke.Color = Color3.fromRGB(150, 100, 255)
+    OpenStroke.Thickness = 2
     
     CloseBtn.MouseButton1Click:Connect(function()
         Main.Visible = false
@@ -514,49 +320,63 @@ function CreateMainGui()
         OpenBtn.Visible = false
     end)
     
-    -- Dragging System
-    local dragging, dragInput, dragStart, startPos
+    -- Simple Dragging System
+    local dragging = false
+    local dragStart, startPos
+    
     Main.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = Main.Position
-            
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
         end
     end)
     
     Main.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
     
-    -- Tabs
+    Main.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- Discord reminder
+    task.spawn(function()
+        while true do
+            task.wait(120)
+            local Alert = Instance.new("TextLabel", ScreenGui)
+            Alert.Size = UDim2.new(0, 300, 0, 40)
+            Alert.Position = UDim2.new(0.5, -150, 1, -50)
+            Alert.BackgroundColor3 = Color3.fromRGB(70, 40, 140)
+            Alert.TextColor3 = Color3.new(1, 1, 1)
+            Alert.Text = "📢 Enjoy RXT Script V10!"
+            Alert.Font = Enum.Font.GothamBold
+            Alert.TextSize = 13
+            Instance.new("UICorner", Alert)
+            task.wait(5)
+            Alert:Destroy()
+        end
+    end)
+    
+    -- Tabs (Removed CONTACT tab)
     local TabHolder = Instance.new("Frame", Main)
-    TabHolder.Size = UDim2.new(1, -20, 0, 55)
-    TabHolder.Position = UDim2.new(0, 10, 0, 120)
+    TabHolder.Size = UDim2.new(1, -20, 0, 40)
+    TabHolder.Position = UDim2.new(0, 10, 0, 90)
     TabHolder.BackgroundTransparency = 1
     
     local TabList = Instance.new("UIListLayout", TabHolder)
     TabList.FillDirection = Enum.FillDirection.Horizontal
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    TabList.Padding = UDim.new(0, 12)
+    TabList.Padding = UDim.new(0, 8)
     
     local Pages = Instance.new("Frame", Main)
-    Pages.Size = UDim2.new(1, -20, 1, -205)
-    Pages.Position = UDim2.new(0, 10, 0, 185)
+    Pages.Size = UDim2.new(1, -20, 1, -150)
+    Pages.Position = UDim2.new(0, 10, 0, 140)
     Pages.BackgroundTransparency = 1
     
     local function CreatePage()
@@ -564,9 +384,8 @@ function CreateMainGui()
         p.Size = UDim2.new(1, 0, 1, 0)
         p.BackgroundTransparency = 1
         p.Visible = false
-        p.ScrollBarThickness = 4
-        p.ScrollBarImageColor3 = Color3.fromRGB(180, 130, 255)
-        Instance.new("UIListLayout", p).Padding = UDim.new(0, 18)
+        p.ScrollBarThickness = 0
+        Instance.new("UIListLayout", p).Padding = UDim.new(0, 10)
         return p
     end
     
@@ -575,54 +394,43 @@ function CreateMainGui()
     local P3 = CreatePage() -- WORLD
     local P4 = CreatePage() -- TP
     local P5 = CreatePage() -- Dev
-    local P6 = CreatePage() -- CONTACT
     P1.Visible = true
     
     local function AddTab(t, pg, icon)
         local b = Instance.new("TextButton", TabHolder)
-        b.Size = UDim2.new(0, 80, 1, 0)
-        b.Text = icon .. "\n" .. t
+        b.Size = UDim2.new(0, 70, 1, 0)
+        b.Text = icon .. " " .. t
         b.TextColor3 = Color3.new(1, 1, 1)
-        b.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-        b.Font = Enum.Font.GothamBlack
-        b.TextSize = 13
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
-        
+        b.BackgroundTransparency = 1
+        b.Font = Enum.Font.GothamBold
+        b.TextSize = 11
         b.MouseButton1Click:Connect(function()
             P1.Visible = false; P2.Visible = false; P3.Visible = false
-            P4.Visible = false; P5.Visible = false; P6.Visible = false
+            P4.Visible = false; P5.Visible = false
             pg.Visible = true
-            b.BackgroundColor3 = Color3.fromRGB(100, 80, 180)
-            
-            for _, btn in pairs(TabHolder:GetChildren()) do
-                if btn:IsA("TextButton") and btn ~= b then
-                    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-                end
-            end
         end)
     end
     
     AddTab("MAIN", P1, "🏠")
     AddTab("EVENT", P2, "🎯")
     AddTab("WORLD", P3, "🌎")
-    AddTab("TELEPORT", P4, "📍")
-    AddTab("DEVELOPER", P5, "⚒️")
-    AddTab("CONTACT", P6, "📞")
+    AddTab("TP", P4, "📍")
+    AddTab("DEV", P5, "⚒️")
     
     -- Toggle System
     local function AddToggle(parent, txt, current, cb)
         local b = Instance.new("TextButton", parent)
-        b.Size = UDim2.new(1, 0, 0, 50)
-        b.Text = txt .. " : ❌"
-        b.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
+        b.Size = UDim2.new(1, 0, 0, 40)
+        b.Text = txt .. " : OFF"
+        b.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
         b.TextColor3 = Color3.new(1, 1, 1)
-        b.Font = Enum.Font.GothamBlack
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
+        b.Font = Enum.Font.GothamBold
+        Instance.new("UICorner", b)
         
         local state = current
         local function Update()
-            b.Text = state and txt .. " : ✅" or txt .. " : ❌"
-            b.BackgroundColor3 = state and Color3.fromRGB(50, 220, 120) or Color3.fromRGB(55, 50, 80)
+            b.Text = state and txt .. " : ON" or txt .. " : OFF"
+            b.BackgroundColor3 = state and Color3.fromRGB(0, 180, 100) or Color3.fromRGB(35, 30, 60)
         end
         
         b.MouseButton1Click:Connect(function()
@@ -659,16 +467,14 @@ function CreateMainGui()
     end)
     
     local SpdInput = Instance.new("TextBox", P1)
-    SpdInput.Size = UDim2.new(1, 0, 0, 45)
+    SpdInput.Size = UDim2.new(1, 0, 0, 35)
     SpdInput.PlaceholderText = "Speed (16-100)"
-    SpdInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+    SpdInput.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     SpdInput.TextColor3 = Color3.new(1, 1, 1)
-    SpdInput.Font = Enum.Font.Gotham
-    SpdInput.TextSize = 16
-    Instance.new("UICorner", SpdInput).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", SpdInput)
     SpdInput.Text = "50"
     
-    AddToggle(P1, "⚡ Stealth Speed", stealthSpeedEnabled, function(s)
+    AddToggle(P1, "🚀 Stealth Speed", stealthSpeedEnabled, function(s)
         stealthSpeedEnabled = s
         speedValue = tonumber(SpdInput.Text) or 50
     end)
@@ -677,7 +483,7 @@ function CreateMainGui()
         radioactiveFarmEnabled = s
     end)
     
-    AddToggle(P2, "⚡ Instant Interaction", instantInteractionEnabled, function(s)
+    AddToggle(P2, "⚡ Instant E", instantInteractionEnabled, function(s)
         instantInteractionEnabled = s
         if s then
             for _, v in pairs(workspace:GetDescendants()) do
@@ -688,7 +494,7 @@ function CreateMainGui()
         end
     end)
     
-    AddToggle(P3, "⚡ FPS Boost", false, function(s)
+    AddToggle(P3, "⚡ FPS BOOST", false, function(s)
         if s then
             for _, v in pairs(game:GetDescendants()) do
                 if v:IsA("BasePart") then
@@ -712,29 +518,29 @@ function CreateMainGui()
     end)
     
     local bSave = Instance.new("TextButton", P4)
-    bSave.Size = UDim2.new(1, 0, 0, 50)
-    bSave.Text = "📍 Save Current Position"
-    bSave.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
+    bSave.Size = UDim2.new(1, 0, 0, 40)
+    bSave.Text = "📍 Save Position"
+    bSave.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     bSave.TextColor3 = Color3.new(1, 1, 1)
-    bSave.Font = Enum.Font.GothamBlack
-    Instance.new("UICorner", bSave).CornerRadius = UDim.new(0, 12)
+    bSave.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", bSave)
     
     bSave.MouseButton1Click:Connect(function()
         if player.Character then
             savedPosition = player.Character.HumanoidRootPart.CFrame
             bSave.Text = "✅ Position Saved!"
-            task.wait(1.5)
-            bSave.Text = "📍 Save Current Position"
+            task.wait(1)
+            bSave.Text = "📍 Save Position"
         end
     end)
     
     local bTP = Instance.new("TextButton", P4)
-    bTP.Size = UDim2.new(1, 0, 0, 50)
-    bTP.Text = "🌀 Teleport to Saved Position"
-    bTP.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
+    bTP.Size = UDim2.new(1, 0, 0, 40)
+    bTP.Text = "🌀 Ghost Smooth TP"
+    bTP.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     bTP.TextColor3 = Color3.new(1, 1, 1)
-    bTP.Font = Enum.Font.GothamBlack
-    Instance.new("UICorner", bTP).CornerRadius = UDim.new(0, 12)
+    bTP.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", bTP)
     
     bTP.MouseButton1Click:Connect(function()
         if savedPosition then
@@ -751,8 +557,8 @@ function CreateMainGui()
                     root.CFrame = savedPosition
                     conn:Disconnect()
                 else
-                    root.CFrame = startCF:Lerp(savedPosition, elapsed / duration)
-                    root.Velocity = Vector3.new(0, 0, 0)
+                    root.CFrame = startCF:Lerp(savedPosition, elapsed/duration)
+                    root.Velocity = Vector3.new(0,0,0)
                 end
             end)
         end
@@ -760,43 +566,33 @@ function CreateMainGui()
     
     -- [[ ⚒️ Developer Tab ]] --
     local DevLabel = Instance.new("TextLabel", P5)
-    DevLabel.Size = UDim2.new(1, 0, 0, 200)
+    DevLabel.Size = UDim2.new(1, 0, 0, 150)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
 ⚒️ Developer Tools
-━━━━━━━━━━━━━━━━━━
-👨‍💻 Developers:
+━━━━━━━━━━━━━━
+Developers:
 • 3zf
 • RXT
 
-📦 Version: V10
-🔐 Key System: RXT24
-⏰ Key Duration: 24 Hours
-🛡️ Safe Ghost Farm
-🎮 Current Game:
-]] .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. [[
-
-🔧 Features Included:
-• Secure Key System
-• Automatic Reporting
-• Advanced UI
-• Anti-AFK Protection
-• Performance Optimized
-• Direct Support
+Version: V10
+Key System: 24 Hours
+Safe Ghost Farm
+Simple & Clean
     ]]
-    DevLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
-    DevLabel.Font = Enum.Font.Gotham
+    DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
+    DevLabel.Font = Enum.Font.GothamBold
     DevLabel.TextSize = 14
     DevLabel.TextYAlignment = Enum.TextYAlignment.Top
     
     local ReloadBtn = Instance.new("TextButton", P5)
-    ReloadBtn.Size = UDim2.new(1, 0, 0, 50)
-    ReloadBtn.Position = UDim2.new(0, 0, 0, 210)
+    ReloadBtn.Size = UDim2.new(1, 0, 0, 40)
+    ReloadBtn.Position = UDim2.new(0, 0, 0, 160)
     ReloadBtn.Text = "🔄 Reload Script"
-    ReloadBtn.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
+    ReloadBtn.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     ReloadBtn.TextColor3 = Color3.new(1, 1, 1)
-    ReloadBtn.Font = Enum.Font.GothamBlack
-    Instance.new("UICorner", ReloadBtn).CornerRadius = UDim.new(0, 12)
+    ReloadBtn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", ReloadBtn)
     
     ReloadBtn.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
@@ -804,210 +600,17 @@ function CreateMainGui()
         CreateKeyGui()
     end)
     
-    -- [[ 📞 Contact Tab ]] --
-    local ContactLabel = Instance.new("TextLabel", P6)
-    ContactLabel.Size = UDim2.new(1, 0, 0, 100)
-    ContactLabel.BackgroundTransparency = 1
-    ContactLabel.Text = [[
-📞 Contact Center
-━━━━━━━━━━━━━━━━━━
-Send your suggestions or complaints
-They will be sent directly to developers
-All messages are monitored and logged
-    ]]
-    ContactLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
-    ContactLabel.Font = Enum.Font.GothamBlack
-    ContactLabel.TextSize = 16
-    ContactLabel.TextYAlignment = Enum.TextYAlignment.Top
-    
-    -- Suggestions Field
-    local SuggestionLabel = Instance.new("TextLabel", P6)
-    SuggestionLabel.Size = UDim2.new(1, 0, 0, 35)
-    SuggestionLabel.Position = UDim2.new(0, 0, 0, 105)
-    SuggestionLabel.BackgroundTransparency = 1
-    SuggestionLabel.Text = "💡 Suggestions:"
-    SuggestionLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
-    SuggestionLabel.Font = Enum.Font.GothamBlack
-    SuggestionLabel.TextSize = 15
-    SuggestionLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local SuggestionBox = Instance.new("TextBox", P6)
-    SuggestionBox.Size = UDim2.new(1, 0, 0, 120)
-    SuggestionBox.Position = UDim2.new(0, 0, 0, 140)
-    SuggestionBox.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    SuggestionBox.TextColor3 = Color3.new(1, 1, 1)
-    SuggestionBox.Font = Enum.Font.Gotham
-    SuggestionBox.TextSize = 15
-    SuggestionBox.PlaceholderText = "Type your suggestion here to improve the script..."
-    SuggestionBox.Text = ""
-    SuggestionBox.TextXAlignment = Enum.TextXAlignment.Left
-    SuggestionBox.TextYAlignment = Enum.TextYAlignment.Top
-    SuggestionBox.MultiLine = true
-    SuggestionBox.ClearTextOnFocus = false
-    Instance.new("UICorner", SuggestionBox).CornerRadius = UDim.new(0, 12)
-    
-    local SendSuggestionBtn = Instance.new("TextButton", P6)
-    SendSuggestionBtn.Size = UDim2.new(1, 0, 0, 50)
-    SendSuggestionBtn.Position = UDim2.new(0, 0, 0, 270)
-    SendSuggestionBtn.Text = "📤 Send Suggestion"
-    SendSuggestionBtn.BackgroundColor3 = Color3.fromRGB(80, 130, 210)
-    SendSuggestionBtn.TextColor3 = Color3.new(1, 1, 1)
-    SendSuggestionBtn.Font = Enum.Font.GothamBlack
-    Instance.new("UICorner", SendSuggestionBtn).CornerRadius = UDim.new(0, 12)
-    
-    SendSuggestionBtn.MouseButton1Click:Connect(function()
-        local suggestion = SuggestionBox.Text
-        if suggestion and suggestion ~= "" and #suggestion > 5 then
-            SendDiscordWebhook(
-                "💡 New Suggestion",
-                suggestion,
-                3447003, -- Blue
-                "suggestion",
-                {
-                    {
-                        ["name"] = "📝 Message Type",
-                        ["value"] = "Suggestion",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "📏 Message Length",
-                        ["value"] = #suggestion .. " characters",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "🕐 Sent Time",
-                        ["value"] = os.date("%I:%M:%S %p"),
-                        ["inline"] = true
-                    }
-                }
-            )
-            
-            SuggestionBox.Text = ""
-            SendSuggestionBtn.Text = "✅ Suggestion Sent!"
-            task.wait(1.5)
-            SendSuggestionBtn.Text = "📤 Send Suggestion"
-        else
-            SendSuggestionBtn.Text = "❌ Write more than 5 characters!"
-            task.wait(1)
-            SendSuggestionBtn.Text = "📤 Send Suggestion"
-        end
-    end)
-    
-    -- Complaints Field
-    local ComplaintLabel = Instance.new("TextLabel", P6)
-    ComplaintLabel.Size = UDim2.new(1, 0, 0, 35)
-    ComplaintLabel.Position = UDim2.new(0, 0, 0, 330)
-    ComplaintLabel.BackgroundTransparency = 1
-    ComplaintLabel.Text = "🚨 Complaints:"
-    ComplaintLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
-    ComplaintLabel.Font = Enum.Font.GothamBlack
-    ComplaintLabel.TextSize = 15
-    ComplaintLabel.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local ComplaintBox = Instance.new("TextBox", P6)
-    ComplaintBox.Size = UDim2.new(1, 0, 0, 120)
-    ComplaintBox.Position = UDim2.new(0, 0, 0, 365)
-    ComplaintBox.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    ComplaintBox.TextColor3 = Color3.new(1, 1, 1)
-    ComplaintBox.Font = Enum.Font.Gotham
-    ComplaintBox.TextSize = 15
-    ComplaintBox.PlaceholderText = "Type your complaint about any problem you faced..."
-    ComplaintBox.Text = ""
-    ComplaintBox.TextXAlignment = Enum.TextXAlignment.Left
-    ComplaintBox.TextYAlignment = Enum.TextYAlignment.Top
-    ComplaintBox.MultiLine = true
-    ComplaintBox.ClearTextOnFocus = false
-    Instance.new("UICorner", ComplaintBox).CornerRadius = UDim.new(0, 12)
-    
-    local SendComplaintBtn = Instance.new("TextButton", P6)
-    SendComplaintBtn.Size = UDim2.new(1, 0, 0, 50)
-    SendComplaintBtn.Position = UDim2.new(0, 0, 0, 495)
-    SendComplaintBtn.Text = "🚨 Send Complaint"
-    SendComplaintBtn.BackgroundColor3 = Color3.fromRGB(210, 80, 80)
-    SendComplaintBtn.TextColor3 = Color3.new(1, 1, 1)
-    SendComplaintBtn.Font = Enum.Font.GothamBlack
-    Instance.new("UICorner", SendComplaintBtn).CornerRadius = UDim.new(0, 12)
-    
-    SendComplaintBtn.MouseButton1Click:Connect(function()
-        local complaint = ComplaintBox.Text
-        if complaint and complaint ~= "" and #complaint > 5 then
-            SendDiscordWebhook(
-                "🚨 New Complaint",
-                complaint,
-                15158332, -- Red
-                "complaint",
-                {
-                    {
-                        ["name"] = "📝 Message Type",
-                        ["value"] = "Complaint",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "📏 Message Length",
-                        ["value"] = #complaint .. " characters",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "⚠️ Priority Level",
-                        ["value"] = "High",
-                        ["inline"] = true
-                    },
-                    {
-                        ["name"] = "🕐 Sent Time",
-                        ["value"] = os.date("%I:%M:%S %p"),
-                        ["inline"] = true
-                    }
-                }
-            )
-            
-            ComplaintBox.Text = ""
-            SendComplaintBtn.Text = "✅ Complaint Sent!"
-            task.wait(1.5)
-            SendComplaintBtn.Text = "🚨 Send Complaint"
-        else
-            SendComplaintBtn.Text = "❌ Write more than 5 characters!"
-            task.wait(1)
-            SendComplaintBtn.Text = "🚨 Send Complaint"
-        end
-    end)
-    
     -- Footer
     local Footer = Instance.new("TextLabel", Main)
-    Footer.Size = UDim2.new(1, 0, 0, 50)
-    Footer.Position = UDim2.new(0, 0, 1, -50)
+    Footer.Size = UDim2.new(1, 0, 0, 30)
+    Footer.Position = UDim2.new(0, 0, 1, -30)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "🔐 Key: RXT24 | ⏰ Duration: 24 Hours | 📡 Webhook: Active"
-    Footer.TextColor3 = Color3.fromRGB(180, 130, 255)
-    Footer.Font = Enum.Font.GothamBlack
-    Footer.TextSize = 13
+    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | CLEAN VERSION"
+    Footer.TextColor3 = Color3.fromRGB(150, 100, 255)
+    Footer.Font = Enum.Font.GothamBold
+    Footer.TextSize = 11
     
-    print("👑 RXT MASTER V10 LOADED - WEBHOOK SYSTEM ACTIVE")
-    
-    -- Send login webhook
-    task.wait(2)
-    SendDiscordWebhook(
-        "🚀 New User Loaded Script",
-        "User loaded RXT Script V10",
-        10181046, -- Purple
-        "login",
-        {
-            {
-                ["name"] = "🎮 Game Name",
-                ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
-                ["inline"] = true
-            },
-            {
-                ["name"] = "🆔 Place ID",
-                ["value"] = tostring(game.PlaceId),
-                ["inline"] = true
-            },
-            {
-                ["name"] = "👥 Players Count",
-                ["value"] = #game:GetService("Players"):GetPlayers(),
-                ["inline"] = true
-            }
-        }
-    )
+    print("👑 RXT MASTER V10 LOADED - CLEAN VERSION")
 end
 
 -- Start with Key GUI
