@@ -10,11 +10,11 @@ local Lighting = game:GetService("Lighting")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 
--- [[ 🔑 نظام المفاتيح ]] --
+-- [[ 🔑 Key System ]] --
 local validKeys = {}
 local webhookURL = "https://discord.com/api/webhooks/1462554040633266217/BoaIVF4se11rul1HJS7RTtESHd9hP0v-6ZYLPm6S82-uWFIC62g2X9k4jjxZ6dcvkDvV"
 
--- [[ ⚙️ الإعدادات ]] --
+-- [[ ⚙️ Settings ]] --
 local stealthSpeedEnabled = false
 local speedValue = 50
 local noclipEnabled = false
@@ -24,9 +24,9 @@ local noRagdollEnabled = false
 local radioactiveFarmEnabled = false
 local savedPosition = nil
 
--- [[ 🛠️ وظائف النظام الخلفية ]] --
+-- [[ 🛠️ Backend Functions ]] --
 
--- [1] مانع الطرد (Anti-AFK)
+-- [1] Anti-AFK
 task.spawn(function()
     local VU = game:GetService("VirtualUser")
     player.Idled:Connect(function()
@@ -35,7 +35,7 @@ task.spawn(function()
     end)
 end)
 
--- [2] محرك السرعة والقفز
+-- [2] Speed and Jump Engine
 RunService.Stepped:Connect(function()
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         local hum = player.Character.Humanoid
@@ -58,14 +58,14 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- [3] قفز لانهائي
+-- [3] Infinite Jump
 UserInputService.JumpRequest:Connect(function()
     if infJumpEnabled and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
         player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
     end
 end)
 
--- [4] تجميع الكوينز المطور
+-- [4] Ghost Farm Collection
 task.spawn(function()
     while task.wait(0.05) do
         if radioactiveFarmEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -84,10 +84,13 @@ task.spawn(function()
     end
 end)
 
--- [[ 🔧 وظيفة إرسال ويب هوك جديدة ومختبرة ]] --
+-- [[ 🔧 Improved Webhook Function ]] --
 local function SendDiscordWebhook(title, description, color, webhookType, extraData)
     pcall(function()
         local url = webhookURL
+        
+        -- Create Roblox profile link
+        local robloxProfile = "https://www.roblox.com/users/" .. player.UserId .. "/profile"
         
         local embed = {
             ["title"] = title,
@@ -100,56 +103,68 @@ local function SendDiscordWebhook(title, description, color, webhookType, extraD
             ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
         }
         
-        -- إضافة معلومات المستخدم
+        -- Add user information
         table.insert(embed.fields, {
-            ["name"] = "👤 المستخدم",
+            ["name"] = "👤 Username",
             ["value"] = player.Name,
             ["inline"] = true
         })
         
         table.insert(embed.fields, {
-            ["name"] = "🆔 الأيدي",
+            ["name"] = "🆔 User ID",
             ["value"] = tostring(player.UserId),
             ["inline"] = true
         })
         
         table.insert(embed.fields, {
-            ["name"] = "🎮 مكان اللعب",
-            ["value"] = game.PlaceId .. " | " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
+            ["name"] = "🔗 Roblox Profile",
+            ["value"] = "[Click Here](" .. robloxProfile .. ")",
+            ["inline"] = true
+        })
+        
+        table.insert(embed.fields, {
+            ["name"] = "🎮 Game",
+            ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
             ["inline"] = false
         })
         
-        -- إضافة بيانات إضافية إذا كانت موجودة
+        table.insert(embed.fields, {
+            ["name"] = "🆔 Game ID",
+            ["value"] = tostring(game.PlaceId),
+            ["inline"] = true
+        })
+        
+        -- Add extra data if exists
         if extraData then
             for _, data in pairs(extraData) do
                 table.insert(embed.fields, data)
             end
         end
         
-        -- إنشاء البيانات النهائية
+        -- Final data
         local data = {
             ["username"] = "RXT Script Logger",
             ["avatar_url"] = "https://cdn.discordapp.com/attachments/123456789/987654321/rxt_logo.png",
             ["embeds"] = {embed}
         }
         
-        -- تحويل البيانات إلى JSON
+        -- Convert to JSON
         local jsonData = HttpService:JSONEncode(data)
         
-        -- إرسال الطلب
+        -- Send request
         local success, response = pcall(function()
             return HttpService:PostAsync(url, jsonData, Enum.HttpContentType.ApplicationJson)
         end)
         
         if success then
-            print("✅ تم إرسال الويب هوك بنجاح: " .. title)
+            print("✅ Webhook sent successfully: " .. title)
         else
-            warn("❌ فشل إرسال الويب هوك: " .. tostring(response))
+            warn("❌ Failed to send webhook: " .. tostring(response))
         end
     end)
 end
 
--- [[ 🎨 واجهة المفتاح ]] --
+-- [[ 🎨 Key GUI ]] --
 local function CreateKeyGui()
     if CoreGui:FindFirstChild("RXT_KeyGUI") then
         CoreGui["RXT_KeyGUI"]:Destroy()
@@ -159,211 +174,231 @@ local function CreateKeyGui()
     KeyGui.Name = "RXT_KeyGUI"
     KeyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- الخلفية
+    -- Background
     local Background = Instance.new("Frame")
     Background.Size = UDim2.new(1, 0, 1, 0)
     Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Background.BackgroundTransparency = 0.6
+    Background.BackgroundTransparency = 0.7
     Background.Parent = KeyGui
     
-    -- نافذة المفتاح الرئيسية
+    -- Main Window
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 450, 0, 400)
-    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -200)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
+    MainFrame.Size = UDim2.new(0, 500, 0, 450)
+    MainFrame.Position = UDim2.new(0.5, -250, 0.5, -225)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = KeyGui
     
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 20)
+    UICorner.CornerRadius = UDim.new(0, 25)
     UICorner.Parent = MainFrame
     
     local UIStroke = Instance.new("UIStroke")
-    UIStroke.Color = Color3.fromRGB(170, 120, 255)
-    UIStroke.Thickness = 3
+    UIStroke.Color = Color3.fromRGB(180, 130, 255)
+    UIStroke.Thickness = 4
     UIStroke.Parent = MainFrame
     
-    -- الصورة العلوية اليسرى
+    -- Try multiple image loading methods
+    local imageIds = {
+        "rbxassetid://86991492020004",
+        "http://www.roblox.com/asset/?id=86991492020004",
+        "https://www.roblox.com/asset/?id=86991492020004"
+    }
+    
+    -- Top Left Image
     local TopLeftImage = Instance.new("ImageLabel")
-    TopLeftImage.Size = UDim2.new(0, 80, 0, 80)
-    TopLeftImage.Position = UDim2.new(0.02, 0, 0.02, 0)
+    TopLeftImage.Size = UDim2.new(0, 90, 0, 90)
+    TopLeftImage.Position = UDim2.new(0.03, 0, 0.03, 0)
     TopLeftImage.BackgroundTransparency = 1
-    TopLeftImage.Image = "rbxassetid://86991492020004"
-    TopLeftImage.ImageColor3 = Color3.fromRGB(170, 120, 255)
-    TopLeftImage.ImageTransparency = 0.2
+    TopLeftImage.Image = imageIds[1]
+    TopLeftImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
+    TopLeftImage.ImageTransparency = 0.3
     TopLeftImage.Parent = MainFrame
     
-    -- الصورة العلوية اليمنى
+    -- Try to load image with different methods
+    task.spawn(function()
+        for i, imgUrl in ipairs(imageIds) do
+            pcall(function()
+                TopLeftImage.Image = imgUrl
+                wait(0.5)
+                if TopLeftImage.ImageTransparency < 0.9 then
+                    break
+                end
+            end)
+        end
+    end)
+    
+    -- Top Right Image
     local TopRightImage = Instance.new("ImageLabel")
-    TopRightImage.Size = UDim2.new(0, 80, 0, 80)
-    TopRightImage.Position = UDim2.new(0.98, -80, 0.02, 0)
+    TopRightImage.Size = UDim2.new(0, 90, 0, 90)
+    TopRightImage.Position = UDim2.new(0.97, -90, 0.03, 0)
     TopRightImage.BackgroundTransparency = 1
-    TopRightImage.Image = "rbxassetid://86991492020004"
-    TopRightImage.ImageColor3 = Color3.fromRGB(170, 120, 255)
-    TopRightImage.ImageTransparency = 0.2
+    TopRightImage.Image = imageIds[1]
+    TopRightImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
+    TopRightImage.ImageTransparency = 0.3
     TopRightImage.Parent = MainFrame
     
-    -- العنوان الرئيسي
+    -- Main Title
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0.8, 0, 0, 100)
-    Title.Position = UDim2.new(0.1, 0, 0.05, 0)
+    Title.Size = UDim2.new(0.8, 0, 0, 120)
+    Title.Position = UDim2.new(0.1, 0, 0.1, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "🔐 RXT SCRIPT\n━━━━━━━━━━━━━━\nVERSION 10.0"
-    Title.TextColor3 = Color3.fromRGB(190, 140, 255)
+    Title.Text = "🔐 RXT SCRIPT V10\n━━━━━━━━━━━━━━━━━━\n24 HOUR KEY SYSTEM"
+    Title.TextColor3 = Color3.fromRGB(200, 150, 255)
     Title.Font = Enum.Font.GothamBlack
-    Title.TextSize = 28
+    Title.TextSize = 30
     Title.TextXAlignment = Enum.TextXAlignment.Center
     Title.Parent = MainFrame
     
-    -- الصورة الوسطى
+    -- Center Image
     local CenterImage = Instance.new("ImageLabel")
-    CenterImage.Size = UDim2.new(0, 120, 0, 120)
-    CenterImage.Position = UDim2.new(0.5, -60, 0.3, 0)
+    CenterImage.Size = UDim2.new(0, 140, 0, 140)
+    CenterImage.Position = UDim2.new(0.5, -70, 0.35, 0)
     CenterImage.BackgroundTransparency = 1
-    CenterImage.Image = "rbxassetid://86991492020004"
+    CenterImage.Image = imageIds[1]
     CenterImage.Parent = MainFrame
     
-    -- قسم المفتاح
+    -- Key Section
     local KeyFrame = Instance.new("Frame")
-    KeyFrame.Size = UDim2.new(0.85, 0, 0, 100)
-    KeyFrame.Position = UDim2.new(0.075, 0, 0.65, 0)
-    KeyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    KeyFrame.Size = UDim2.new(0.9, 0, 0, 120)
+    KeyFrame.Position = UDim2.new(0.05, 0, 0.65, 0)
+    KeyFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
     KeyFrame.Parent = MainFrame
     
     local KeyUICorner = Instance.new("UICorner")
-    KeyUICorner.CornerRadius = UDim.new(0, 15)
+    KeyUICorner.CornerRadius = UDim.new(0, 20)
     KeyUICorner.Parent = KeyFrame
     
     local KeyLabel = Instance.new("TextLabel")
-    KeyLabel.Size = UDim2.new(1, 0, 0, 40)
+    KeyLabel.Size = UDim2.new(1, 0, 0, 50)
     KeyLabel.BackgroundTransparency = 1
-    KeyLabel.Text = "🔑 المفتاح: RXT24 (24 ساعة)"
+    KeyLabel.Text = "🔑 ENTER KEY: RXT24 (24 HOURS)"
     KeyLabel.TextColor3 = Color3.new(1, 1, 1)
-    KeyLabel.Font = Enum.Font.GothamBold
-    KeyLabel.TextSize = 18
+    KeyLabel.Font = Enum.Font.GothamBlack
+    KeyLabel.TextSize = 20
     KeyLabel.Parent = KeyFrame
     
     local KeyBox = Instance.new("TextBox")
-    KeyBox.Size = UDim2.new(0.9, 0, 0, 50)
+    KeyBox.Size = UDim2.new(0.9, 0, 0, 60)
     KeyBox.Position = UDim2.new(0.05, 0, 0.5, 0)
-    KeyBox.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+    KeyBox.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
     KeyBox.TextColor3 = Color3.new(1, 1, 1)
-    KeyBox.Font = Enum.Font.GothamBold
-    KeyBox.TextSize = 18
-    KeyBox.PlaceholderText = "أدخل RXT24 هنا..."
+    KeyBox.Font = Enum.Font.GothamBlack
+    KeyBox.TextSize = 20
+    KeyBox.PlaceholderText = "Type RXT24 here..."
     KeyBox.Text = ""
     KeyBox.Parent = KeyFrame
     
     local KeyBoxCorner = Instance.new("UICorner")
-    KeyBoxCorner.CornerRadius = UDim.new(0, 12)
+    KeyBoxCorner.CornerRadius = UDim.new(0, 15)
     KeyBoxCorner.Parent = KeyBox
     
-    -- زر التفعيل
+    -- Activate Button
     local ActivateBtn = Instance.new("TextButton")
-    ActivateBtn.Size = UDim2.new(0.85, 0, 0, 60)
-    ActivateBtn.Position = UDim2.new(0.075, 0, 0.85, 0)
-    ActivateBtn.BackgroundColor3 = Color3.fromRGB(130, 80, 230)
-    ActivateBtn.Text = "⚡ تفعيل السكربت الآن"
+    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 70)
+    ActivateBtn.Position = UDim2.new(0.05, 0, 0.85, 0)
+    ActivateBtn.BackgroundColor3 = Color3.fromRGB(140, 90, 240)
+    ActivateBtn.Text = "⚡ ACTIVATE SCRIPT NOW"
     ActivateBtn.TextColor3 = Color3.new(1, 1, 1)
     ActivateBtn.Font = Enum.Font.GothamBlack
-    ActivateBtn.TextSize = 22
+    ActivateBtn.TextSize = 24
     ActivateBtn.Parent = MainFrame
     
     local ActivateCorner = Instance.new("UICorner")
-    ActivateCorner.CornerRadius = UDim.new(0, 15)
+    ActivateCorner.CornerRadius = UDim.new(0, 20)
     ActivateCorner.Parent = ActivateBtn
     
-    -- إضافة تدرج لوني للزر
+    -- Gradient Effect
     local UIGradient = Instance.new("UIGradient")
     UIGradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(130, 80, 230)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 130, 255))
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 90, 240)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(190, 140, 255))
     })
     UIGradient.Rotation = 45
     UIGradient.Parent = ActivateBtn
     
-    -- رسالة الحالة
+    -- Status Message
     local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(0.85, 0, 0, 30)
-    StatusLabel.Position = UDim2.new(0.075, 0, 0.95, 0)
+    StatusLabel.Size = UDim2.new(0.9, 0, 0, 40)
+    StatusLabel.Position = UDim2.new(0.05, 0, 0.95, 0)
     StatusLabel.BackgroundTransparency = 1
-    StatusLabel.Text = "⌛ أدخل المفتاح لتفعيل السكربت"
+    StatusLabel.Text = "⌛ Enter key to activate the script"
     StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     StatusLabel.Font = Enum.Font.Gotham
-    StatusLabel.TextSize = 14
+    StatusLabel.TextSize = 16
     StatusLabel.Parent = MainFrame
     
-    -- نص المطورين
+    -- Developers Text
     local DevText = Instance.new("TextLabel")
-    DevText.Size = UDim2.new(1, 0, 0, 40)
-    DevText.Position = UDim2.new(0, 0, 1, -40)
+    DevText.Size = UDim2.new(1, 0, 0, 50)
+    DevText.Position = UDim2.new(0, 0, 1, -50)
     DevText.BackgroundTransparency = 1
-    DevText.Text = "⚒️ تم التطوير بواسطة 3zf & RXT | V10 | Key: RXT24"
-    DevText.TextColor3 = Color3.fromRGB(170, 120, 255)
-    DevText.Font = Enum.Font.GothamBold
-    DevText.TextSize = 13
+    DevText.Text = "⚒️ Developed by 3zf & RXT | V10 | Key: RXT24"
+    DevText.TextColor3 = Color3.fromRGB(180, 130, 255)
+    DevText.Font = Enum.Font.GothamBlack
+    DevText.TextSize = 15
     DevText.Parent = MainFrame
     
-    -- دالة تفعيل المفتاح
+    -- Activation Function
     ActivateBtn.MouseButton1Click:Connect(function()
         local enteredKey = KeyBox.Text:upper():gsub("%s+", "")
         
         if enteredKey == "RXT24" then
-            -- إرسال إشعار التفعيل للدسكورد
+            -- Send activation webhook
             SendDiscordWebhook(
-                "✅ تفعيل جديد للسكربت",
-                "قام مستخدم بتفعيل سكربت RXT V10",
-                65280, -- أخضر
+                "✅ NEW SCRIPT ACTIVATION",
+                "User activated RXT Script V10",
+                65280, -- Green
                 "activation",
                 {
                     {
-                        ["name"] = "🔑 المفتاح المستخدم",
+                        ["name"] = "🔑 Key Used",
                         ["value"] = "RXT24",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "⏰ صلاحية المفتاح",
-                        ["value"] = "24 ساعة",
+                        ["name"] = "⏰ Key Duration",
+                        ["value"] = "24 Hours",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "🕐 وقت التفعيل",
+                        ["name"] = "🕐 Activation Time",
                         ["value"] = os.date("%I:%M:%S %p"),
                         ["inline"] = true
                     }
                 }
             )
             
-            StatusLabel.Text = "✅ تم التفعيل بنجاح! جاري التحميل..."
+            StatusLabel.Text = "✅ Activated Successfully! Loading..."
             StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
             
-            -- تأثير نجاح
-            ActivateBtn.Text = "✅ تم التفعيل!"
+            -- Success effect
+            ActivateBtn.Text = "✅ ACTIVATED!"
             ActivateBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
             
             task.wait(1.5)
             KeyGui:Destroy()
             CreateMainGui()
         else
-            StatusLabel.Text = "❌ المفتاح غير صحيح! المفتاح الصحيح: RXT24"
+            StatusLabel.Text = "❌ Wrong Key! Correct Key: RXT24"
             StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
             
-            -- تأثير خطأ
-            ActivateBtn.Text = "❌ خطأ في المفتاح!"
+            -- Error effect
+            ActivateBtn.Text = "❌ WRONG KEY!"
             ActivateBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
             
             task.wait(1)
-            ActivateBtn.Text = "⚡ تفعيل السكربت الآن"
-            ActivateBtn.BackgroundColor3 = Color3.fromRGB(130, 80, 230)
+            ActivateBtn.Text = "⚡ ACTIVATE SCRIPT NOW"
+            ActivateBtn.BackgroundColor3 = Color3.fromRGB(140, 90, 240)
         end
     end)
     
-    -- إضافة تأثيرات للزر
+    -- Button Hover Effects
     ActivateBtn.MouseEnter:Connect(function()
         game:GetService("TweenService"):Create(
             ActivateBtn,
             TweenInfo.new(0.3),
-            {BackgroundColor3 = Color3.fromRGB(150, 100, 250)}
+            {BackgroundColor3 = Color3.fromRGB(160, 110, 250)}
         ):Play()
     end)
     
@@ -371,14 +406,14 @@ local function CreateKeyGui()
         game:GetService("TweenService"):Create(
             ActivateBtn,
             TweenInfo.new(0.3),
-            {BackgroundColor3 = Color3.fromRGB(130, 80, 230)}
+            {BackgroundColor3 = Color3.fromRGB(140, 90, 240)}
         ):Play()
     end)
     
     return KeyGui
 end
 
--- [[ 🎨 الواجهة الرئيسية ]] --
+-- [[ 🎨 Main GUI ]] --
 function CreateMainGui()
     if CoreGui:FindFirstChild("RXT_Master_V10") then
         CoreGui["RXT_Master_V10"]:Destroy()
@@ -389,46 +424,46 @@ function CreateMainGui()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local Main = Instance.new("Frame", ScreenGui)
-    Main.Size = UDim2.new(0, 420, 0, 620)
-    Main.Position = UDim2.new(0.5, -210, 0.5, -310)
-    Main.BackgroundColor3 = Color3.fromRGB(18, 18, 25)
+    Main.Size = UDim2.new(0, 450, 0, 650)
+    Main.Position = UDim2.new(0.5, -225, 0.5, -325)
+    Main.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     Main.BorderSizePixel = 0
     
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 20)
+    UICorner.CornerRadius = UDim.new(0, 25)
     UICorner.Parent = Main
     
     local UIStroke = Instance.new("UIStroke")
-    UIStroke.Color = Color3.fromRGB(170, 120, 255)
-    UIStroke.Thickness = 3
+    UIStroke.Color = Color3.fromRGB(180, 130, 255)
+    UIStroke.Thickness = 4
     UIStroke.Parent = Main
     
-    -- الهيدر مع الصور
+    -- Header with Images
     local Header = Instance.new("Frame", Main)
-    Header.Size = UDim2.new(1, -20, 0, 90)
+    Header.Size = UDim2.new(1, -20, 0, 100)
     Header.Position = UDim2.new(0, 10, 0, 10)
     Header.BackgroundTransparency = 1
     
-    -- الصورة اليسرى
+    -- Left Image
     local LeftImage = Instance.new("ImageLabel", Header)
-    LeftImage.Size = UDim2.new(0, 70, 0, 70)
+    LeftImage.Size = UDim2.new(0, 80, 0, 80)
     LeftImage.Position = UDim2.new(0, 0, 0, 10)
     LeftImage.BackgroundTransparency = 1
     LeftImage.Image = "rbxassetid://86991492020004"
-    LeftImage.ImageColor3 = Color3.fromRGB(170, 120, 255)
+    LeftImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
     
-    -- الصورة اليمنى
+    -- Right Image
     local RightImage = Instance.new("ImageLabel", Header)
-    RightImage.Size = UDim2.new(0, 70, 0, 70)
-    RightImage.Position = UDim2.new(1, -70, 0, 10)
+    RightImage.Size = UDim2.new(0, 80, 0, 80)
+    RightImage.Position = UDim2.new(1, -80, 0, 10)
     RightImage.BackgroundTransparency = 1
     RightImage.Image = "rbxassetid://86991492020004"
-    RightImage.ImageColor3 = Color3.fromRGB(170, 120, 255)
+    RightImage.ImageColor3 = Color3.fromRGB(180, 130, 255)
     
-    -- العنوان
+    -- Title
     local Title = Instance.new("TextLabel", Header)
-    Title.Size = UDim2.new(1, -150, 1, 0)
-    Title.Position = UDim2.new(0, 80, 0, 0)
+    Title.Size = UDim2.new(1, -170, 1, 0)
+    Title.Position = UDim2.new(0, 90, 0, 0)
     Title.BackgroundTransparency = 1
     Title.Text = [[
 👑 RXT SERVER V10
@@ -437,36 +472,36 @@ function CreateMainGui()
 ⚒️ 3zf & RXT
 🔐 Key: RXT24
     ]]
-    Title.TextColor3 = Color3.fromRGB(190, 140, 255)
+    Title.TextColor3 = Color3.fromRGB(200, 150, 255)
     Title.Font = Enum.Font.GothamBlack
-    Title.TextSize = 16
+    Title.TextSize = 18
     Title.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- زر الإغلاق
+    -- Close Button
     local CloseBtn = Instance.new("TextButton", Main)
-    CloseBtn.Size = UDim2.new(0, 40, 0, 40)
-    CloseBtn.Position = UDim2.new(1, -50, 0, 20)
+    CloseBtn.Size = UDim2.new(0, 45, 0, 45)
+    CloseBtn.Position = UDim2.new(1, -55, 0, 20)
     CloseBtn.Text = "✕"
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(230, 80, 80)
     CloseBtn.TextColor3 = Color3.new(1, 1, 1)
     CloseBtn.Font = Enum.Font.GothamBlack
-    CloseBtn.TextSize = 22
+    CloseBtn.TextSize = 24
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
     
-    -- زر الفتح العائم
+    -- Floating Open Button
     local OpenBtn = Instance.new("TextButton", ScreenGui)
-    OpenBtn.Size = UDim2.new(0, 70, 0, 70)
-    OpenBtn.Position = UDim2.new(0, 25, 0.5, -35)
-    OpenBtn.BackgroundColor3 = Color3.fromRGB(45, 35, 80)
+    OpenBtn.Size = UDim2.new(0, 75, 0, 75)
+    OpenBtn.Position = UDim2.new(0, 30, 0.5, -37.5)
+    OpenBtn.BackgroundColor3 = Color3.fromRGB(50, 40, 90)
     OpenBtn.Text = "RXT\nV10"
-    OpenBtn.TextColor3 = Color3.fromRGB(190, 140, 255)
+    OpenBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
     OpenBtn.Font = Enum.Font.GothamBlack
-    OpenBtn.TextSize = 16
+    OpenBtn.TextSize = 18
     OpenBtn.Visible = false
     Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
     
     local OpenStroke = Instance.new("UIStroke", OpenBtn)
-    OpenStroke.Color = Color3.fromRGB(170, 120, 255)
+    OpenStroke.Color = Color3.fromRGB(180, 130, 255)
     OpenStroke.Thickness = 3
     
     CloseBtn.MouseButton1Click:Connect(function()
@@ -479,7 +514,7 @@ function CreateMainGui()
         OpenBtn.Visible = false
     end)
     
-    -- نظام السحب
+    -- Dragging System
     local dragging, dragInput, dragStart, startPos
     Main.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -508,20 +543,20 @@ function CreateMainGui()
         end
     end)
     
-    -- التبويبات
+    -- Tabs
     local TabHolder = Instance.new("Frame", Main)
-    TabHolder.Size = UDim2.new(1, -20, 0, 50)
-    TabHolder.Position = UDim2.new(0, 10, 0, 110)
+    TabHolder.Size = UDim2.new(1, -20, 0, 55)
+    TabHolder.Position = UDim2.new(0, 10, 0, 120)
     TabHolder.BackgroundTransparency = 1
     
     local TabList = Instance.new("UIListLayout", TabHolder)
     TabList.FillDirection = Enum.FillDirection.Horizontal
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    TabList.Padding = UDim.new(0, 10)
+    TabList.Padding = UDim.new(0, 12)
     
     local Pages = Instance.new("Frame", Main)
-    Pages.Size = UDim2.new(1, -20, 1, -190)
-    Pages.Position = UDim2.new(0, 10, 0, 170)
+    Pages.Size = UDim2.new(1, -20, 1, -205)
+    Pages.Position = UDim2.new(0, 10, 0, 185)
     Pages.BackgroundTransparency = 1
     
     local function CreatePage()
@@ -530,8 +565,8 @@ function CreateMainGui()
         p.BackgroundTransparency = 1
         p.Visible = false
         p.ScrollBarThickness = 4
-        p.ScrollBarImageColor3 = Color3.fromRGB(170, 120, 255)
-        Instance.new("UIListLayout", p).Padding = UDim.new(0, 15)
+        p.ScrollBarImageColor3 = Color3.fromRGB(180, 130, 255)
+        Instance.new("UIListLayout", p).Padding = UDim.new(0, 18)
         return p
     end
     
@@ -540,54 +575,54 @@ function CreateMainGui()
     local P3 = CreatePage() -- WORLD
     local P4 = CreatePage() -- TP
     local P5 = CreatePage() -- Dev
-    local P6 = CreatePage() -- اتصل
+    local P6 = CreatePage() -- CONTACT
     P1.Visible = true
     
     local function AddTab(t, pg, icon)
         local b = Instance.new("TextButton", TabHolder)
-        b.Size = UDim2.new(0, 75, 1, 0)
+        b.Size = UDim2.new(0, 80, 1, 0)
         b.Text = icon .. "\n" .. t
         b.TextColor3 = Color3.new(1, 1, 1)
-        b.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-        b.Font = Enum.Font.GothamBold
-        b.TextSize = 12
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+        b.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+        b.Font = Enum.Font.GothamBlack
+        b.TextSize = 13
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
         
         b.MouseButton1Click:Connect(function()
             P1.Visible = false; P2.Visible = false; P3.Visible = false
             P4.Visible = false; P5.Visible = false; P6.Visible = false
             pg.Visible = true
-            b.BackgroundColor3 = Color3.fromRGB(90, 70, 160)
+            b.BackgroundColor3 = Color3.fromRGB(100, 80, 180)
             
             for _, btn in pairs(TabHolder:GetChildren()) do
                 if btn:IsA("TextButton") and btn ~= b then
-                    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
+                    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
                 end
             end
         end)
     end
     
-    AddTab("الرئيسية", P1, "🏠")
-    AddTab("الأحداث", P2, "🎯")
-    AddTab("العالم", P3, "🌎")
-    AddTab("الانتقال", P4, "📍")
-    AddTab("المطور", P5, "⚒️")
-    AddTab("اتصل بنا", P6, "📞")
+    AddTab("MAIN", P1, "🏠")
+    AddTab("EVENT", P2, "🎯")
+    AddTab("WORLD", P3, "🌎")
+    AddTab("TELEPORT", P4, "📍")
+    AddTab("DEVELOPER", P5, "⚒️")
+    AddTab("CONTACT", P6, "📞")
     
-    -- نظام الأزرار
+    -- Toggle System
     local function AddToggle(parent, txt, current, cb)
         local b = Instance.new("TextButton", parent)
-        b.Size = UDim2.new(1, 0, 0, 45)
+        b.Size = UDim2.new(1, 0, 0, 50)
         b.Text = txt .. " : ❌"
-        b.BackgroundColor3 = Color3.fromRGB(50, 45, 75)
+        b.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
         b.TextColor3 = Color3.new(1, 1, 1)
-        b.Font = Enum.Font.GothamBold
-        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+        b.Font = Enum.Font.GothamBlack
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
         
         local state = current
         local function Update()
             b.Text = state and txt .. " : ✅" or txt .. " : ❌"
-            b.BackgroundColor3 = state and Color3.fromRGB(40, 200, 110) or Color3.fromRGB(50, 45, 75)
+            b.BackgroundColor3 = state and Color3.fromRGB(50, 220, 120) or Color3.fromRGB(55, 50, 80)
         end
         
         b.MouseButton1Click:Connect(function()
@@ -599,8 +634,8 @@ function CreateMainGui()
         return b
     end
     
-    -- [ أزرار القائمة ]
-    AddToggle(P1, "🚫 إيقاف الرجل", noRagdollEnabled, function(s)
+    -- [ Main Buttons ]
+    AddToggle(P1, "🚫 No Ragdoll", noRagdollEnabled, function(s)
         noRagdollEnabled = s
     end)
     
@@ -619,30 +654,30 @@ function CreateMainGui()
         end
     end)
     
-    AddToggle(P1, "🦘 قفز لا نهائي", infJumpEnabled, function(s)
+    AddToggle(P1, "🦘 Infinite Jump", infJumpEnabled, function(s)
         infJumpEnabled = s
     end)
     
     local SpdInput = Instance.new("TextBox", P1)
-    SpdInput.Size = UDim2.new(1, 0, 0, 40)
-    SpdInput.PlaceholderText = "السرعة (16-100)"
-    SpdInput.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    SpdInput.Size = UDim2.new(1, 0, 0, 45)
+    SpdInput.PlaceholderText = "Speed (16-100)"
+    SpdInput.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
     SpdInput.TextColor3 = Color3.new(1, 1, 1)
     SpdInput.Font = Enum.Font.Gotham
-    SpdInput.TextSize = 15
-    Instance.new("UICorner", SpdInput).CornerRadius = UDim.new(0, 10)
+    SpdInput.TextSize = 16
+    Instance.new("UICorner", SpdInput).CornerRadius = UDim.new(0, 12)
     SpdInput.Text = "50"
     
-    AddToggle(P1, "⚡ السرعة الخفية", stealthSpeedEnabled, function(s)
+    AddToggle(P1, "⚡ Stealth Speed", stealthSpeedEnabled, function(s)
         stealthSpeedEnabled = s
         speedValue = tonumber(SpdInput.Text) or 50
     end)
     
-    AddToggle(P2, "☢️ تجميع الكوينز", radioactiveFarmEnabled, function(s)
+    AddToggle(P2, "☢️ Radioactive Farm", radioactiveFarmEnabled, function(s)
         radioactiveFarmEnabled = s
     end)
     
-    AddToggle(P2, "⚡ تفاعل فوري", instantInteractionEnabled, function(s)
+    AddToggle(P2, "⚡ Instant Interaction", instantInteractionEnabled, function(s)
         instantInteractionEnabled = s
         if s then
             for _, v in pairs(workspace:GetDescendants()) do
@@ -653,7 +688,7 @@ function CreateMainGui()
         end
     end)
     
-    AddToggle(P3, "⚡ تحسين الأداء", false, function(s)
+    AddToggle(P3, "⚡ FPS Boost", false, function(s)
         if s then
             for _, v in pairs(game:GetDescendants()) do
                 if v:IsA("BasePart") then
@@ -663,13 +698,13 @@ function CreateMainGui()
         end
     end)
     
-    AddToggle(P3, "👁️ تكبير الكاميرا", false, function(s)
+    AddToggle(P3, "👁️ Unlock Zoom", false, function(s)
         if s then
             player.CameraMaxZoomDistance = 100000
         end
     end)
     
-    AddToggle(P3, "💡 إضاءة كاملة", false, function(s)
+    AddToggle(P3, "💡 Full Bright", false, function(s)
         if s then
             Lighting.Brightness = 2
             Lighting.ClockTime = 14
@@ -677,29 +712,29 @@ function CreateMainGui()
     end)
     
     local bSave = Instance.new("TextButton", P4)
-    bSave.Size = UDim2.new(1, 0, 0, 45)
-    bSave.Text = "📍 حفظ الموقع الحالي"
-    bSave.BackgroundColor3 = Color3.fromRGB(50, 45, 75)
+    bSave.Size = UDim2.new(1, 0, 0, 50)
+    bSave.Text = "📍 Save Current Position"
+    bSave.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
     bSave.TextColor3 = Color3.new(1, 1, 1)
-    bSave.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", bSave).CornerRadius = UDim.new(0, 10)
+    bSave.Font = Enum.Font.GothamBlack
+    Instance.new("UICorner", bSave).CornerRadius = UDim.new(0, 12)
     
     bSave.MouseButton1Click:Connect(function()
         if player.Character then
             savedPosition = player.Character.HumanoidRootPart.CFrame
-            bSave.Text = "✅ تم حفظ الموقع!"
+            bSave.Text = "✅ Position Saved!"
             task.wait(1.5)
-            bSave.Text = "📍 حفظ الموقع الحالي"
+            bSave.Text = "📍 Save Current Position"
         end
     end)
     
     local bTP = Instance.new("TextButton", P4)
-    bTP.Size = UDim2.new(1, 0, 0, 45)
-    bTP.Text = "🌀 الانتقال للموقع المحفوظ"
-    bTP.BackgroundColor3 = Color3.fromRGB(50, 45, 75)
+    bTP.Size = UDim2.new(1, 0, 0, 50)
+    bTP.Text = "🌀 Teleport to Saved Position"
+    bTP.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
     bTP.TextColor3 = Color3.new(1, 1, 1)
-    bTP.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", bTP).CornerRadius = UDim.new(0, 10)
+    bTP.Font = Enum.Font.GothamBlack
+    Instance.new("UICorner", bTP).CornerRadius = UDim.new(0, 12)
     
     bTP.MouseButton1Click:Connect(function()
         if savedPosition then
@@ -723,45 +758,45 @@ function CreateMainGui()
         end
     end)
     
-    -- [[ 🛠️ تبويب Dev ]] --
+    -- [[ ⚒️ Developer Tab ]] --
     local DevLabel = Instance.new("TextLabel", P5)
-    DevLabel.Size = UDim2.new(1, 0, 0, 180)
+    DevLabel.Size = UDim2.new(1, 0, 0, 200)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
-⚒️ أدوات المطور
+⚒️ Developer Tools
 ━━━━━━━━━━━━━━━━━━
-👨‍💻 المطورون:
+👨‍💻 Developers:
 • 3zf
 • RXT
 
-📦 الإصدار: V10
-🔐 نظام المفاتيح: RXT24
-⏰ صلاحية المفتاح: 24 ساعة
-🛡️ مزرعة الأشباح الآمنة
-🎮 مكان اللعب الحالي:
+📦 Version: V10
+🔐 Key System: RXT24
+⏰ Key Duration: 24 Hours
+🛡️ Safe Ghost Farm
+🎮 Current Game:
 ]] .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name .. [[
 
-🔧 المميزات المضمنة:
-• نظام مفاتيح آمن
-• إرسال تقارير تلقائية
-• واجهة مستخدم متطورة
-• حماية من الطرد
-• أداء محسن
-• دعم فني مباشر
+🔧 Features Included:
+• Secure Key System
+• Automatic Reporting
+• Advanced UI
+• Anti-AFK Protection
+• Performance Optimized
+• Direct Support
     ]]
-    DevLabel.TextColor3 = Color3.fromRGB(190, 140, 255)
+    DevLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
     DevLabel.Font = Enum.Font.Gotham
-    DevLabel.TextSize = 13
+    DevLabel.TextSize = 14
     DevLabel.TextYAlignment = Enum.TextYAlignment.Top
     
     local ReloadBtn = Instance.new("TextButton", P5)
-    ReloadBtn.Size = UDim2.new(1, 0, 0, 45)
-    ReloadBtn.Position = UDim2.new(0, 0, 0, 190)
-    ReloadBtn.Text = "🔄 إعادة تحميل السكربت"
-    ReloadBtn.BackgroundColor3 = Color3.fromRGB(50, 45, 75)
+    ReloadBtn.Size = UDim2.new(1, 0, 0, 50)
+    ReloadBtn.Position = UDim2.new(0, 0, 0, 210)
+    ReloadBtn.Text = "🔄 Reload Script"
+    ReloadBtn.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
     ReloadBtn.TextColor3 = Color3.new(1, 1, 1)
-    ReloadBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", ReloadBtn).CornerRadius = UDim.new(0, 10)
+    ReloadBtn.Font = Enum.Font.GothamBlack
+    Instance.new("UICorner", ReloadBtn).CornerRadius = UDim.new(0, 12)
     
     ReloadBtn.MouseButton1Click:Connect(function()
         ScreenGui:Destroy()
@@ -769,78 +804,78 @@ function CreateMainGui()
         CreateKeyGui()
     end)
     
-    -- [[ 📞 تبويب الاقتراحات والشكاوي ]] --
+    -- [[ 📞 Contact Tab ]] --
     local ContactLabel = Instance.new("TextLabel", P6)
-    ContactLabel.Size = UDim2.new(1, 0, 0, 90)
+    ContactLabel.Size = UDim2.new(1, 0, 0, 100)
     ContactLabel.BackgroundTransparency = 1
     ContactLabel.Text = [[
-📞 مركز الاتصال
+📞 Contact Center
 ━━━━━━━━━━━━━━━━━━
-أرسل اقتراحاتك أو شكاويك
-سيتم إرسالها مباشرة إلى المطورين
-جميع الرسائل مراقبة وتسجل
+Send your suggestions or complaints
+They will be sent directly to developers
+All messages are monitored and logged
     ]]
-    ContactLabel.TextColor3 = Color3.fromRGB(190, 140, 255)
-    ContactLabel.Font = Enum.Font.GothamBold
-    ContactLabel.TextSize = 15
+    ContactLabel.TextColor3 = Color3.fromRGB(200, 150, 255)
+    ContactLabel.Font = Enum.Font.GothamBlack
+    ContactLabel.TextSize = 16
     ContactLabel.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- حقل الاقتراحات
+    -- Suggestions Field
     local SuggestionLabel = Instance.new("TextLabel", P6)
-    SuggestionLabel.Size = UDim2.new(1, 0, 0, 30)
-    SuggestionLabel.Position = UDim2.new(0, 0, 0, 95)
+    SuggestionLabel.Size = UDim2.new(1, 0, 0, 35)
+    SuggestionLabel.Position = UDim2.new(0, 0, 0, 105)
     SuggestionLabel.BackgroundTransparency = 1
-    SuggestionLabel.Text = "💡 الاقتراحات:"
+    SuggestionLabel.Text = "💡 Suggestions:"
     SuggestionLabel.TextColor3 = Color3.fromRGB(150, 200, 255)
-    SuggestionLabel.Font = Enum.Font.GothamBold
-    SuggestionLabel.TextSize = 14
+    SuggestionLabel.Font = Enum.Font.GothamBlack
+    SuggestionLabel.TextSize = 15
     SuggestionLabel.TextXAlignment = Enum.TextXAlignment.Left
     
     local SuggestionBox = Instance.new("TextBox", P6)
-    SuggestionBox.Size = UDim2.new(1, 0, 0, 110)
-    SuggestionBox.Position = UDim2.new(0, 0, 0, 125)
-    SuggestionBox.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    SuggestionBox.Size = UDim2.new(1, 0, 0, 120)
+    SuggestionBox.Position = UDim2.new(0, 0, 0, 140)
+    SuggestionBox.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
     SuggestionBox.TextColor3 = Color3.new(1, 1, 1)
     SuggestionBox.Font = Enum.Font.Gotham
-    SuggestionBox.TextSize = 14
-    SuggestionBox.PlaceholderText = "اكتب اقتراحك هنا لتحسين السكربت..."
+    SuggestionBox.TextSize = 15
+    SuggestionBox.PlaceholderText = "Type your suggestion here to improve the script..."
     SuggestionBox.Text = ""
     SuggestionBox.TextXAlignment = Enum.TextXAlignment.Left
     SuggestionBox.TextYAlignment = Enum.TextYAlignment.Top
     SuggestionBox.MultiLine = true
     SuggestionBox.ClearTextOnFocus = false
-    Instance.new("UICorner", SuggestionBox).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", SuggestionBox).CornerRadius = UDim.new(0, 12)
     
     local SendSuggestionBtn = Instance.new("TextButton", P6)
-    SendSuggestionBtn.Size = UDim2.new(1, 0, 0, 45)
-    SendSuggestionBtn.Position = UDim2.new(0, 0, 0, 245)
-    SendSuggestionBtn.Text = "📤 إرسال الاقتراح"
-    SendSuggestionBtn.BackgroundColor3 = Color3.fromRGB(70, 120, 200)
+    SendSuggestionBtn.Size = UDim2.new(1, 0, 0, 50)
+    SendSuggestionBtn.Position = UDim2.new(0, 0, 0, 270)
+    SendSuggestionBtn.Text = "📤 Send Suggestion"
+    SendSuggestionBtn.BackgroundColor3 = Color3.fromRGB(80, 130, 210)
     SendSuggestionBtn.TextColor3 = Color3.new(1, 1, 1)
-    SendSuggestionBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", SendSuggestionBtn).CornerRadius = UDim.new(0, 10)
+    SendSuggestionBtn.Font = Enum.Font.GothamBlack
+    Instance.new("UICorner", SendSuggestionBtn).CornerRadius = UDim.new(0, 12)
     
     SendSuggestionBtn.MouseButton1Click:Connect(function()
         local suggestion = SuggestionBox.Text
         if suggestion and suggestion ~= "" and #suggestion > 5 then
             SendDiscordWebhook(
-                "💡 اقتراح جديد",
+                "💡 New Suggestion",
                 suggestion,
-                3447003, -- أزرق
+                3447003, -- Blue
                 "suggestion",
                 {
                     {
-                        ["name"] = "📝 نوع الرسالة",
-                        ["value"] = "اقتراح",
+                        ["name"] = "📝 Message Type",
+                        ["value"] = "Suggestion",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "📏 طول الرسالة",
-                        ["value"] = #suggestion .. " حرف",
+                        ["name"] = "📏 Message Length",
+                        ["value"] = #suggestion .. " characters",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "🕐 وقت الإرسال",
+                        ["name"] = "🕐 Sent Time",
                         ["value"] = os.date("%I:%M:%S %p"),
                         ["inline"] = true
                     }
@@ -848,77 +883,77 @@ function CreateMainGui()
             )
             
             SuggestionBox.Text = ""
-            SendSuggestionBtn.Text = "✅ تم إرسال الاقتراح!"
+            SendSuggestionBtn.Text = "✅ Suggestion Sent!"
             task.wait(1.5)
-            SendSuggestionBtn.Text = "📤 إرسال الاقتراح"
+            SendSuggestionBtn.Text = "📤 Send Suggestion"
         else
-            SendSuggestionBtn.Text = "❌ اكتب اقتراحاً أطول من 5 أحرف!"
+            SendSuggestionBtn.Text = "❌ Write more than 5 characters!"
             task.wait(1)
-            SendSuggestionBtn.Text = "📤 إرسال الاقتراح"
+            SendSuggestionBtn.Text = "📤 Send Suggestion"
         end
     end)
     
-    -- حقل الشكاوي
+    -- Complaints Field
     local ComplaintLabel = Instance.new("TextLabel", P6)
-    ComplaintLabel.Size = UDim2.new(1, 0, 0, 30)
-    ComplaintLabel.Position = UDim2.new(0, 0, 0, 300)
+    ComplaintLabel.Size = UDim2.new(1, 0, 0, 35)
+    ComplaintLabel.Position = UDim2.new(0, 0, 0, 330)
     ComplaintLabel.BackgroundTransparency = 1
-    ComplaintLabel.Text = "🚨 الشكاوي:"
+    ComplaintLabel.Text = "🚨 Complaints:"
     ComplaintLabel.TextColor3 = Color3.fromRGB(255, 150, 150)
-    ComplaintLabel.Font = Enum.Font.GothamBold
-    ComplaintLabel.TextSize = 14
+    ComplaintLabel.Font = Enum.Font.GothamBlack
+    ComplaintLabel.TextSize = 15
     ComplaintLabel.TextXAlignment = Enum.TextXAlignment.Left
     
     local ComplaintBox = Instance.new("TextBox", P6)
-    ComplaintBox.Size = UDim2.new(1, 0, 0, 110)
-    ComplaintBox.Position = UDim2.new(0, 0, 0, 330)
-    ComplaintBox.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    ComplaintBox.Size = UDim2.new(1, 0, 0, 120)
+    ComplaintBox.Position = UDim2.new(0, 0, 0, 365)
+    ComplaintBox.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
     ComplaintBox.TextColor3 = Color3.new(1, 1, 1)
     ComplaintBox.Font = Enum.Font.Gotham
-    ComplaintBox.TextSize = 14
-    ComplaintBox.PlaceholderText = "اكتب شكواك هنا عن مشكلة واجهتها..."
+    ComplaintBox.TextSize = 15
+    ComplaintBox.PlaceholderText = "Type your complaint about any problem you faced..."
     ComplaintBox.Text = ""
     ComplaintBox.TextXAlignment = Enum.TextXAlignment.Left
     ComplaintBox.TextYAlignment = Enum.TextYAlignment.Top
     ComplaintBox.MultiLine = true
     ComplaintBox.ClearTextOnFocus = false
-    Instance.new("UICorner", ComplaintBox).CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", ComplaintBox).CornerRadius = UDim.new(0, 12)
     
     local SendComplaintBtn = Instance.new("TextButton", P6)
-    SendComplaintBtn.Size = UDim2.new(1, 0, 0, 45)
-    SendComplaintBtn.Position = UDim2.new(0, 0, 0, 450)
-    SendComplaintBtn.Text = "🚨 إرسال الشكوى"
-    SendComplaintBtn.BackgroundColor3 = Color3.fromRGB(200, 70, 70)
+    SendComplaintBtn.Size = UDim2.new(1, 0, 0, 50)
+    SendComplaintBtn.Position = UDim2.new(0, 0, 0, 495)
+    SendComplaintBtn.Text = "🚨 Send Complaint"
+    SendComplaintBtn.BackgroundColor3 = Color3.fromRGB(210, 80, 80)
     SendComplaintBtn.TextColor3 = Color3.new(1, 1, 1)
-    SendComplaintBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", SendComplaintBtn).CornerRadius = UDim.new(0, 10)
+    SendComplaintBtn.Font = Enum.Font.GothamBlack
+    Instance.new("UICorner", SendComplaintBtn).CornerRadius = UDim.new(0, 12)
     
     SendComplaintBtn.MouseButton1Click:Connect(function()
         local complaint = ComplaintBox.Text
         if complaint and complaint ~= "" and #complaint > 5 then
             SendDiscordWebhook(
-                "🚨 شكوى جديدة",
+                "🚨 New Complaint",
                 complaint,
-                15158332, -- أحمر
+                15158332, -- Red
                 "complaint",
                 {
                     {
-                        ["name"] = "📝 نوع الرسالة",
-                        ["value"] = "شكوى",
+                        ["name"] = "📝 Message Type",
+                        ["value"] = "Complaint",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "📏 طول الرسالة",
-                        ["value"] = #complaint .. " حرف",
+                        ["name"] = "📏 Message Length",
+                        ["value"] = #complaint .. " characters",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "⚠️ مستوى الأهمية",
-                        ["value"] = "عالية",
+                        ["name"] = "⚠️ Priority Level",
+                        ["value"] = "High",
                         ["inline"] = true
                     },
                     {
-                        ["name"] = "🕐 وقت الإرسال",
+                        ["name"] = "🕐 Sent Time",
                         ["value"] = os.date("%I:%M:%S %p"),
                         ["inline"] = true
                     }
@@ -926,88 +961,48 @@ function CreateMainGui()
             )
             
             ComplaintBox.Text = ""
-            SendComplaintBtn.Text = "✅ تم إرسال الشكوى!"
+            SendComplaintBtn.Text = "✅ Complaint Sent!"
             task.wait(1.5)
-            SendComplaintBtn.Text = "🚨 إرسال الشكوى"
+            SendComplaintBtn.Text = "🚨 Send Complaint"
         else
-            SendComplaintBtn.Text = "❌ اكتب شكوى أطول من 5 أحرف!"
+            SendComplaintBtn.Text = "❌ Write more than 5 characters!"
             task.wait(1)
-            SendComplaintBtn.Text = "🚨 إرسال الشكوى"
+            SendComplaintBtn.Text = "🚨 Send Complaint"
         end
     end)
     
-    -- زر اختبار الويب هوك
-    local TestWebhookBtn = Instance.new("TextButton", P5)
-    TestWebhookBtn.Size = UDim2.new(1, 0, 0, 45)
-    TestWebhookBtn.Position = UDim2.new(0, 0, 0, 245)
-    TestWebhookBtn.Text = "🔧 اختبار نظام الإرسال"
-    TestWebhookBtn.BackgroundColor3 = Color3.fromRGB(70, 45, 110)
-    TestWebhookBtn.TextColor3 = Color3.new(1, 1, 1)
-    TestWebhookBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", TestWebhookBtn).CornerRadius = UDim.new(0, 10)
-    
-    TestWebhookBtn.MouseButton1Click:Connect(function()
-        SendDiscordWebhook(
-            "🔧 اختبار نظام الإرسال",
-            "هذه رسالة اختبار من سكربت RXT V10\nتم إرسالها بنجاح ✅",
-            16753920, -- برتقالي
-            "test",
-            {
-                {
-                    ["name"] = "🧪 حالة الاختبار",
-                    ["value"] = "ناجح",
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "📊 إصدار السكربت",
-                    ["value"] = "V10",
-                    ["inline"] = true
-                },
-                {
-                    ["name"] = "🔗 رابط الويب هوك",
-                    ["value"] = "يعمل بشكل صحيح",
-                    ["inline"] = false
-                }
-            }
-        )
-        
-        TestWebhookBtn.Text = "✅ تم إرسال الاختبار!"
-        task.wait(1.5)
-        TestWebhookBtn.Text = "🔧 اختبار نظام الإرسال"
-    end)
-    
-    -- الفوتر
+    -- Footer
     local Footer = Instance.new("TextLabel", Main)
-    Footer.Size = UDim2.new(1, 0, 0, 40)
-    Footer.Position = UDim2.new(0, 0, 1, -40)
+    Footer.Size = UDim2.new(1, 0, 0, 50)
+    Footer.Position = UDim2.new(0, 0, 1, -50)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "🔐 المفتاح: RXT24 | ⏰ صلاحية: 24 ساعة | 📡 نظام الإرسال: نشط"
-    Footer.TextColor3 = Color3.fromRGB(170, 120, 255)
-    Footer.Font = Enum.Font.GothamBold
-    Footer.TextSize = 12
+    Footer.Text = "🔐 Key: RXT24 | ⏰ Duration: 24 Hours | 📡 Webhook: Active"
+    Footer.TextColor3 = Color3.fromRGB(180, 130, 255)
+    Footer.Font = Enum.Font.GothamBlack
+    Footer.TextSize = 13
     
     print("👑 RXT MASTER V10 LOADED - WEBHOOK SYSTEM ACTIVE")
     
-    -- إرسال رسالة دخول للويب هوك
+    -- Send login webhook
     task.wait(2)
     SendDiscordWebhook(
-        "🚀 دخول مستخدم جديد",
-        "قام مستخدم بتحميل سكربت RXT V10",
-        10181046, -- بنفسجي
+        "🚀 New User Loaded Script",
+        "User loaded RXT Script V10",
+        10181046, -- Purple
         "login",
         {
             {
-                ["name"] = "🎮 مكان اللعب",
+                ["name"] = "🎮 Game Name",
                 ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name,
                 ["inline"] = true
             },
             {
-                ["name"] = "🆔 كود المكان",
+                ["name"] = "🆔 Place ID",
                 ["value"] = tostring(game.PlaceId),
                 ["inline"] = true
             },
             {
-                ["name"] = "👥 عدد اللاعبين",
+                ["name"] = "👥 Players Count",
                 ["value"] = #game:GetService("Players"):GetPlayers(),
                 ["inline"] = true
             }
@@ -1015,5 +1010,5 @@ function CreateMainGui()
     )
 end
 
--- بدء واجهة المفتاح أولاً
+-- Start with Key GUI
 CreateKeyGui()
