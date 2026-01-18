@@ -22,10 +22,11 @@ local noRagdollEnabled = false
 local radioactiveFarmEnabled = false
 local savedPosition = nil
 local antiAFKEnabled = true -- Anti-AFK enabled by default
+local lastAFKAction = 0 -- Track last anti-AFK action
 
 -- [[ 🛠️ Backend Functions ]] --
 
--- [1] Advanced Anti-AFK System
+-- [1] Advanced Anti-AFK System (Every 15 minutes)
 local antiAFKConnection
 local function ToggleAntiAFK(state)
     antiAFKEnabled = state
@@ -41,41 +42,63 @@ local function ToggleAntiAFK(state)
         antiAFKConnection = player.Idled:Connect(function()
             VU:CaptureController()
             VU:ClickButton2(Vector2.new())
-            print("🔄 Anti-AFK: Prevented kick")
+            print("🔄 Anti-AFK: Prevented kick (Idle detection)")
         end)
         
-        -- Method 2: Movement simulation (Extra protection)
+        -- Method 2: Scheduled movement every 15 minutes (900 seconds)
         task.spawn(function()
             while antiAFKEnabled do
-                task.wait(30) -- Every 30 seconds
+                task.wait(900) -- Every 15 minutes (900 seconds)
+                
+                -- Record time
+                lastAFKAction = os.time()
                 
                 -- Simulate small movement
                 if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                     local root = player.Character.HumanoidRootPart
                     
-                    -- Small invisible movement
-                    local currentPosition = root.Position
-                    root.CFrame = root.CFrame * CFrame.new(0, 0.001, 0)
-                    task.wait(0.1)
-                    root.CFrame = root.CFrame * CFrame.new(0, -0.001, 0)
+                    -- Very small invisible movement (0.001 studs)
+                    local originalPosition = root.Position
                     
-                    -- Simulate camera movement
-                    local camera = workspace.CurrentCamera
-                    if camera then
-                        local currentCF = camera.CFrame
-                        camera.CFrame = currentCF * CFrame.Angles(0, math.rad(0.5), 0)
-                        task.wait(0.1)
-                        camera.CFrame = currentCF
-                    end
+                    -- Move up 0.001 studs
+                    root.CFrame = root.CFrame * CFrame.new(0, 0.001, 0)
+                    task.wait(0.05)
+                    
+                    -- Move back down
+                    root.CFrame = root.CFrame * CFrame.new(0, -0.001, 0)
+                    task.wait(0.05)
+                    
+                    -- Restore original position
+                    root.CFrame = CFrame.new(originalPosition) * (root.CFrame - root.Position)
+                    
+                    print("📡 Anti-AFK: Micro-movement completed")
                 end
                 
-                -- Simulate key press
-                virtualInput = game:GetService("VirtualInputManager")
+                -- Simulate camera movement (very subtle)
+                local camera = workspace.CurrentCamera
+                if camera then
+                    local currentCF = camera.CFrame
+                    
+                    -- Tiny camera rotation (0.1 degree)
+                    camera.CFrame = currentCF * CFrame.Angles(0, math.rad(0.1), 0)
+                    task.wait(0.05)
+                    camera.CFrame = currentCF * CFrame.Angles(0, math.rad(-0.1), 0)
+                    task.wait(0.05)
+                    camera.CFrame = currentCF
+                    
+                    print("📷 Anti-AFK: Camera adjustment completed")
+                end
+                
+                -- Simulate space key press (very quick)
+                local virtualInput = game:GetService("VirtualInputManager")
                 virtualInput:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                task.wait(0.1)
+                task.wait(0.05)
                 virtualInput:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
                 
-                print("🔒 Anti-AFK: Still active, no kick")
+                -- Status update
+                local currentTime = os.date("%H:%M:%S")
+                print("✅ Anti-AFK: Protection active | Time: " .. currentTime)
+                print("⏰ Next action in 15 minutes")
             end
         end)
         
@@ -83,11 +106,15 @@ local function ToggleAntiAFK(state)
         player.CharacterAdded:Connect(function()
             if antiAFKEnabled then
                 task.wait(2)
-                print("♻️ Anti-AFK: Character respawned, protection reactivated")
+                print("♻️ Anti-AFK: Character respawned, protection remains active")
             end
         end)
         
+        -- Initial status
+        lastAFKAction = os.time()
         print("✅ Anti-AFK: Protection activated")
+        print("⏰ First action will occur in 15 minutes")
+        
     else
         print("❌ Anti-AFK: Protection deactivated")
     end
@@ -411,24 +438,57 @@ function CreateMainGui()
     
     -- Anti-AFK Status Indicator
     local afkStatus = Instance.new("TextLabel", ScreenGui)
-    afkStatus.Size = UDim2.new(0, 150, 0, 30)
-    afkStatus.Position = UDim2.new(1, -160, 1, -35)
+    afkStatus.Size = UDim2.new(0, 200, 0, 35)
+    afkStatus.Position = UDim2.new(1, -210, 1, -40)
     afkStatus.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
     afkStatus.TextColor3 = Color3.new(1, 1, 1)
-    afkStatus.Text = "🟢 ANTI-AFK: ON"
+    afkStatus.Text = "🟢 ANTI-AFK: ON (15min)"
     afkStatus.Font = Enum.Font.GothamBold
     afkStatus.TextSize = 12
     Instance.new("UICorner", afkStatus)
     
+    -- Anti-AFK Timer Display
+    local afkTimer = Instance.new("TextLabel", ScreenGui)
+    afkTimer.Size = UDim2.new(0, 200, 0, 25)
+    afkTimer.Position = UDim2.new(1, -210, 1, -70)
+    afkTimer.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    afkTimer.TextColor3 = Color3.new(1, 1, 1)
+    afkTimer.Text = "Next: 15:00"
+    afkTimer.Font = Enum.Font.Gotham
+    afkTimer.TextSize = 11
+    Instance.new("UICorner", afkTimer)
+    
+    -- Update AFK status and timer
     local function UpdateAFKStatus()
         if antiAFKEnabled then
-            afkStatus.Text = "🟢 ANTI-AFK: ON"
+            afkStatus.Text = "🟢 ANTI-AFK: ON (15min)"
             afkStatus.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+            
+            -- Calculate next action time
+            local nextActionTime = lastAFKAction + 900
+            local timeLeft = nextActionTime - os.time()
+            
+            if timeLeft > 0 then
+                local minutes = math.floor(timeLeft / 60)
+                local seconds = math.floor(timeLeft % 60)
+                afkTimer.Text = string.format("Next: %02d:%02d", minutes, seconds)
+            else
+                afkTimer.Text = "Next: Soon"
+            end
         else
             afkStatus.Text = "🔴 ANTI-AFK: OFF"
             afkStatus.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+            afkTimer.Text = "Timer: Inactive"
         end
     end
+    
+    -- Update timer every second
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            UpdateAFKStatus()
+        end
+    end)
     
     UpdateAFKStatus()
     
@@ -531,7 +591,7 @@ function CreateMainGui()
     
     -- [ Main Buttons ]
     -- Anti-AFK Toggle (NEW)
-    AddToggle(P1, "🛡️ Anti-AFK", antiAFKEnabled, function(s)
+    AddToggle(P1, "🛡️ Anti-AFK (15min)", antiAFKEnabled, function(s)
         antiAFKEnabled = s
         ToggleAntiAFK(s)
         UpdateAFKStatus()
@@ -660,7 +720,7 @@ function CreateMainGui()
     
     -- [[ ⚒️ Developer Tab ]] --
     local DevLabel = Instance.new("TextLabel", P5)
-    DevLabel.Size = UDim2.new(1, 0, 0, 180)
+    DevLabel.Size = UDim2.new(1, 0, 0, 200)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
 ⚒️ Developer Tools
@@ -673,14 +733,22 @@ Version: V10
 Key System: 24 Hours
 Safe Ghost Farm
 
-🛡️ Anti-AFK Features:
+🛡️ Advanced Anti-AFK:
 • 3 Layer Protection
-• VirtualUser Method
-• Movement Simulation
-• Camera Movement
-• Auto Reconnect
+• Every 15 Minutes
+• Micro Movements (0.001 studs)
+• Camera Adjustment
+• Space Key Simulation
 • Works Anywhere
 • Toggle On/Off
+• Timer Display
+• Auto Reconnect
+
+🔧 Features:
+• Prevents AFK kick
+• Very subtle movements
+• Won't disrupt gameplay
+• Compatible with all games
     ]]
     DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevLabel.Font = Enum.Font.GothamBold
@@ -689,7 +757,7 @@ Safe Ghost Farm
     
     local ReloadBtn = Instance.new("TextButton", P5)
     ReloadBtn.Size = UDim2.new(1, 0, 0, 40)
-    ReloadBtn.Position = UDim2.new(0, 0, 0, 190)
+    ReloadBtn.Position = UDim2.new(0, 0, 0, 210)
     ReloadBtn.Text = "🔄 Reload Script"
     ReloadBtn.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     ReloadBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -707,12 +775,13 @@ Safe Ghost Farm
     Footer.Size = UDim2.new(1, 0, 0, 30)
     Footer.Position = UDim2.new(0, 0, 1, -30)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | ANTI-AFK READY"
+    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | ANTI-AFK (15min)"
     Footer.TextColor3 = Color3.fromRGB(150, 100, 255)
     Footer.Font = Enum.Font.GothamBold
     Footer.TextSize = 11
     
-    print("👑 RXT MASTER V10 LOADED - ADVANCED ANTI-AFK SYSTEM")
+    print("👑 RXT MASTER V10 LOADED - ADVANCED ANTI-AFK SYSTEM (15min)")
+    print("⏰ Anti-AFK will activate every 15 minutes")
 end
 
 -- Start with Key GUI
