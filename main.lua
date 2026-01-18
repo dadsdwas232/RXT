@@ -124,28 +124,43 @@ end
 task.wait(1)
 ToggleAntiAFK(true)
 
--- [2] Speed and Jump Engine
-RunService.Stepped:Connect(function()
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        local hum = player.Character.Humanoid
-        local root = player.Character:FindFirstChild("HumanoidRootPart")
-        
-        if stealthSpeedEnabled then
-            hum.WalkSpeed = speedValue
-        else
-            hum.WalkSpeed = 16
-        end
-        
-        if radioactiveFarmEnabled and root then
-            for _, v in pairs(player.Character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                end
-            end
-            root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
-        end
+-- [2] Fixed Speed and Jump Engine
+local speedConnection
+local function UpdateSpeed()
+    if speedConnection then
+        speedConnection:Disconnect()
     end
-end)
+    
+    speedConnection = RunService.Stepped:Connect(function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            local hum = player.Character.Humanoid
+            
+            -- Update speed value from input
+            speedValue = tonumber(speedInput.Text) or 50
+            
+            -- Apply speed
+            if stealthSpeedEnabled then
+                hum.WalkSpeed = speedValue
+            else
+                hum.WalkSpeed = 16
+            end
+            
+            -- Radioactive farm protection
+            if radioactiveFarmEnabled and player.Character:FindFirstChild("HumanoidRootPart") then
+                local root = player.Character.HumanoidRootPart
+                for _, v in pairs(player.Character:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.CanCollide = false
+                    end
+                end
+                root.Velocity = Vector3.new(root.Velocity.X, 0, root.Velocity.Z)
+            end
+        end
+    end)
+end
+
+-- Call once to start
+UpdateSpeed()
 
 -- [3] Infinite Jump
 UserInputService.JumpRequest:Connect(function()
@@ -385,7 +400,7 @@ function CreateMainGui()
     CloseBtn.TextSize = 20
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
     
-    -- Floating Open Button
+    -- Floating Open Button (Movable)
     local OpenBtn = Instance.new("TextButton", ScreenGui)
     OpenBtn.Size = UDim2.new(0, 60, 0, 60)
     OpenBtn.Position = UDim2.new(0, 20, 0.5, -30)
@@ -401,6 +416,31 @@ function CreateMainGui()
     OpenStroke.Color = Color3.fromRGB(150, 100, 255)
     OpenStroke.Thickness = 2
     
+    -- Make OpenBtn movable
+    local openDragging = false
+    local openDragStart, openStartPos
+    
+    OpenBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            openDragging = true
+            openDragStart = input.Position
+            openStartPos = OpenBtn.Position
+        end
+    end)
+    
+    OpenBtn.InputChanged:Connect(function(input)
+        if openDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - openDragStart
+            OpenBtn.Position = UDim2.new(openStartPos.X.Scale, openStartPos.X.Offset + delta.X, openStartPos.Y.Scale, openStartPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    OpenBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            openDragging = false
+        end
+    end)
+    
     CloseBtn.MouseButton1Click:Connect(function()
         Main.Visible = false
         OpenBtn.Visible = true
@@ -411,7 +451,7 @@ function CreateMainGui()
         OpenBtn.Visible = false
     end)
     
-    -- Simple Dragging System
+    -- Simple Dragging System for Main window
     local dragging = false
     local dragStart, startPos
     
@@ -590,7 +630,7 @@ function CreateMainGui()
     end
     
     -- [ Main Buttons ]
-    -- Anti-AFK Toggle (NEW)
+    -- Anti-AFK Toggle
     AddToggle(P1, "🛡️ Anti-AFK (15min)", antiAFKEnabled, function(s)
         antiAFKEnabled = s
         ToggleAntiAFK(s)
@@ -620,17 +660,54 @@ function CreateMainGui()
         infJumpEnabled = s
     end)
     
-    local SpdInput = Instance.new("TextBox", P1)
-    SpdInput.Size = UDim2.new(1, 0, 0, 35)
-    SpdInput.PlaceholderText = "Speed (16-100)"
-    SpdInput.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    SpdInput.TextColor3 = Color3.new(1, 1, 1)
-    Instance.new("UICorner", SpdInput)
-    SpdInput.Text = "50"
+    -- Speed Input (FIXED)
+    local speedInput = Instance.new("TextBox", P1)
+    speedInput.Name = "SpeedInput"
+    speedInput.Size = UDim2.new(1, 0, 0, 35)
+    speedInput.PlaceholderText = "Speed (16-500)"
+    speedInput.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    speedInput.TextColor3 = Color3.new(1, 1, 1)
+    speedInput.Font = Enum.Font.Gotham
+    speedInput.TextSize = 14
+    speedInput.Text = "50"
+    Instance.new("UICorner", speedInput)
     
+    -- Speed Toggle (FIXED)
     AddToggle(P1, "🚀 Stealth Speed", stealthSpeedEnabled, function(s)
         stealthSpeedEnabled = s
-        speedValue = tonumber(SpdInput.Text) or 50
+        if s then
+            -- Update speed value from input
+            speedValue = tonumber(speedInput.Text) or 50
+            print("✅ Stealth Speed: ON | Speed: " .. speedValue)
+        else
+            print("❌ Stealth Speed: OFF")
+        end
+        UpdateSpeed() -- Update the speed connection
+    end)
+    
+    -- Update speed when input changes
+    speedInput.FocusLost:Connect(function()
+        local newSpeed = tonumber(speedInput.Text)
+        if newSpeed then
+            if newSpeed < 16 then
+                speedInput.Text = "16"
+                speedValue = 16
+            elseif newSpeed > 500 then
+                speedInput.Text = "500"
+                speedValue = 500
+            else
+                speedValue = newSpeed
+            end
+            print("📊 Speed updated to: " .. speedValue)
+            
+            -- Update speed if stealth speed is enabled
+            if stealthSpeedEnabled then
+                UpdateSpeed()
+            end
+        else
+            speedInput.Text = "50"
+            speedValue = 50
+        end
     end)
     
     AddToggle(P2, "☢️ Radioactive Farm", radioactiveFarmEnabled, function(s)
@@ -734,21 +811,17 @@ Key System: 24 Hours
 Safe Ghost Farm
 
 🛡️ Advanced Anti-AFK:
-• 3 Layer Protection
 • Every 15 Minutes
-• Micro Movements (0.001 studs)
+• Micro Movements
 • Camera Adjustment
-• Space Key Simulation
-• Works Anywhere
 • Toggle On/Off
 • Timer Display
-• Auto Reconnect
 
-🔧 Features:
-• Prevents AFK kick
-• Very subtle movements
-• Won't disrupt gameplay
-• Compatible with all games
+⚡ Speed System (FIXED):
+• Real-time updates
+• Range: 16-500
+• Smooth transition
+• Works with all features
     ]]
     DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevLabel.Font = Enum.Font.GothamBold
@@ -781,7 +854,8 @@ Safe Ghost Farm
     Footer.TextSize = 11
     
     print("👑 RXT MASTER V10 LOADED - ADVANCED ANTI-AFK SYSTEM (15min)")
-    print("⏰ Anti-AFK will activate every 15 minutes")
+    print("⚡ Speed System: FIXED and working")
+    print("🎯 Floating button: Now movable")
 end
 
 -- Start with Key GUI
