@@ -1,5 +1,5 @@
 -- [[ 👑 RXT SERVER - V10 GHOST FARM FIX - Key System ]] + FLIGHT SYSTEM + MOBILE CONTROLS
--- تم التعديل للعمل على جميع الأجهزة + واجهة أصغر
+-- تم التعديل للتحكم باللمس الطبيعي مثل البي سي
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -22,8 +22,8 @@ local infJumpEnabled = false
 local noRagdollEnabled = false
 local radioactiveFarmEnabled = false
 local savedPosition = nil
-local antiAFKEnabled = true -- Anti-AFK enabled by default
-local lastAFKAction = 0 -- Track last anti-AFK action
+local antiAFKEnabled = true
+local lastAFKAction = 0
 
 -- [[ 🚀 FLIGHT SYSTEM ]] --
 local isFlying = false
@@ -33,14 +33,11 @@ local bodyVelocity, bodyGyro
 local coordinatesEnabled = false
 local coordinatesConnection
 local flightUIFrame
-local killModeEnabled = false -- وضع الحماية من الموت
-local mobileControlsEnabled = true -- تحكم للجوال (مفعل افتراضياً)
-local mobileControlFrame
-local mobileControls
+local killModeEnabled = false
 
 -- [[ 🛠️ Backend Functions ]] --
 
--- [1] Advanced Anti-AFK System (Every 15 minutes)
+-- [1] Advanced Anti-AFK System
 local antiAFKConnection
 local function ToggleAntiAFK(state)
     antiAFKEnabled = state
@@ -55,7 +52,6 @@ local function ToggleAntiAFK(state)
         antiAFKConnection = player.Idled:Connect(function()
             VU:CaptureController()
             VU:ClickButton2(Vector2.new())
-            print("🔄 Anti-AFK: Prevented kick")
         end)
         
         task.spawn(function()
@@ -73,43 +69,16 @@ local function ToggleAntiAFK(state)
                     task.wait(0.05)
                     root.CFrame = CFrame.new(originalPosition) * (root.CFrame - root.Position)
                 end
-                
-                local camera = workspace.CurrentCamera
-                if camera then
-                    local currentCF = camera.CFrame
-                    camera.CFrame = currentCF * CFrame.Angles(0, math.rad(0.1), 0)
-                    task.wait(0.05)
-                    camera.CFrame = currentCF * CFrame.Angles(0, math.rad(-0.1), 0)
-                    task.wait(0.05)
-                    camera.CFrame = currentCF
-                end
-                
-                local virtualInput = game:GetService("VirtualInputManager")
-                virtualInput:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-                task.wait(0.05)
-                virtualInput:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-                
-                local currentTime = os.date("%H:%M:%S")
-                print("✅ Anti-AFK: Protection active | Time: " .. currentTime)
-            end
-        end)
-        
-        player.CharacterAdded:Connect(function()
-            if antiAFKEnabled then
-                task.wait(2)
-                print("♻️ Anti-AFK: Character respawned")
             end
         end)
         
         lastAFKAction = os.time()
         print("✅ Anti-AFK: Activated")
-        
     else
         print("❌ Anti-AFK: Deactivated")
     end
 end
 
--- Start Anti-AFK by default
 task.wait(1)
 ToggleAntiAFK(true)
 
@@ -173,175 +142,139 @@ task.spawn(function()
     end
 end)
 
--- 🔵 [5.1] دالة لإنشاء واجهة تحكم للجوال
-local function createMobileControls()
-    if mobileControlFrame then
-        mobileControlFrame:Destroy()
+-- [[ 🎮 نظام التحكم الجديد للجوال ]] --
+local mobileFlightActive = false
+local mobileControlsFrame
+local mobileJoystick
+
+-- دالة إنشاء عناصر تحكم الطيران للجوال
+local function createMobileFlightUI()
+    if mobileControlsFrame then
+        mobileControlsFrame:Destroy()
     end
     
     if not UserInputService.TouchEnabled then return end
     
     local screenGui = Instance.new("ScreenGui", CoreGui)
-    screenGui.Name = "RXT_MobileFlightControls"
+    screenGui.Name = "RXT_MobileFlightUI"
     screenGui.ResetOnSpawn = false
     
-    mobileControlFrame = Instance.new("Frame", screenGui)
-    mobileControlFrame.Size = UDim2.new(0, 250, 0, 250) -- أصغر
-    mobileControlFrame.Position = UDim2.new(0.5, -125, 1, -280)
-    mobileControlFrame.BackgroundTransparency = 0.7
-    mobileControlFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+    -- Frame للتحكم (شريط في الأسفل)
+    mobileControlsFrame = Instance.new("Frame", screenGui)
+    mobileControlsFrame.Size = UDim2.new(1, 0, 0, 100)
+    mobileControlsFrame.Position = UDim2.new(0, 0, 1, -100)
+    mobileControlsFrame.BackgroundTransparency = 0.8
+    mobileControlsFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 20)
     
-    Instance.new("UICorner", mobileControlFrame).CornerRadius = UDim.new(0, 15)
+    -- Joystick للحركة (على اليسار)
+    local joystickOuter = Instance.new("Frame", mobileControlsFrame)
+    joystickOuter.Size = UDim2.new(0, 120, 0, 120)
+    joystickOuter.Position = UDim2.new(0, 20, 0.5, -60)
+    joystickOuter.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+    joystickOuter.BackgroundTransparency = 0.7
+    Instance.new("UICorner", joystickOuter).CornerRadius = UDim.new(1, 0)
     
-    -- عنوان التحكم
-    local title = Instance.new("TextLabel", mobileControlFrame)
-    title.Text = "✈️ Flight Controls"
-    title.Size = UDim2.new(1, 0, 0, 25)
-    title.BackgroundTransparency = 1
-    title.TextColor3 = Color3.new(1, 1, 1)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 14
+    mobileJoystick = Instance.new("Frame", joystickOuter)
+    mobileJoystick.Size = UDim2.new(0, 50, 0, 50)
+    mobileJoystick.Position = UDim2.new(0.5, -25, 0.5, -25)
+    mobileJoystick.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    mobileJoystick.BackgroundTransparency = 0.3
+    Instance.new("UICorner", mobileJoystick).CornerRadius = UDim.new(1, 0)
     
-    -- Joystick للحركة
-    local joystickFrame = Instance.new("Frame", mobileControlFrame)
-    joystickFrame.Size = UDim2.new(0, 100, 0, 100) -- أصغر
-    joystickFrame.Position = UDim2.new(0, 20, 0.4, -50)
-    joystickFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
-    joystickFrame.BackgroundTransparency = 0.5
-    Instance.new("UICorner", joystickFrame).CornerRadius = UDim.new(1, 0)
+    -- معلومات الطيران (في الوسط)
+    local flightInfo = Instance.new("TextLabel", mobileControlsFrame)
+    flightInfo.Size = UDim2.new(0, 200, 0, 60)
+    flightInfo.Position = UDim2.new(0.5, -100, 0.5, -30)
+    flightInfo.BackgroundTransparency = 1
+    flightInfo.Text = "✈️ FLIGHT MODE\nSpeed: " .. flySpeed
+    flightInfo.TextColor3 = Color3.new(1, 1, 1)
+    flightInfo.Font = Enum.Font.GothamBold
+    flightInfo.TextSize = 14
+    flightInfo.TextYAlignment = Enum.TextYAlignment.Top
     
-    local joystick = Instance.new("Frame", joystickFrame)
-    joystick.Size = UDim2.new(0, 35, 0, 35) -- أصغر
-    joystick.Position = UDim2.new(0.5, -17.5, 0.5, -17.5)
-    joystick.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
-    Instance.new("UICorner", joystick).CornerRadius = UDim.new(1, 0)
+    -- زر إيقاف الطيران (على اليمين)
+    local stopBtn = Instance.new("TextButton", mobileControlsFrame)
+    stopBtn.Size = UDim2.new(0, 80, 0, 60)
+    stopBtn.Position = UDim2.new(1, -100, 0.5, -30)
+    stopBtn.Text = "🛑 STOP\nFLIGHT"
+    stopBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+    stopBtn.TextColor3 = Color3.new(1, 1, 1)
+    stopBtn.Font = Enum.Font.GothamBold
+    stopBtn.TextSize = 12
+    Instance.new("UICorner", stopBtn).CornerRadius = UDim.new(0, 10)
     
-    -- أزرار التحكم
-    local upBtn = Instance.new("TextButton", mobileControlFrame)
-    upBtn.Text = "⬆️"
-    upBtn.Size = UDim2.new(0, 50, 0, 50) -- أصغر
-    upBtn.Position = UDim2.new(0.7, -25, 0.2, -25)
-    upBtn.BackgroundColor3 = Color3.fromRGB(60, 160, 60)
-    upBtn.TextSize = 20
-    Instance.new("UICorner", upBtn).CornerRadius = UDim.new(0, 10)
+    stopBtn.MouseButton1Click:Connect(function()
+        stopFlight()
+    end)
     
-    local downBtn = Instance.new("TextButton", mobileControlFrame)
-    downBtn.Text = "⬇️"
-    downBtn.Size = UDim2.new(0, 50, 0, 50) -- أصغر
-    downBtn.Position = UDim2.new(0.7, -25, 0.7, -25)
-    downBtn.BackgroundColor3 = Color3.fromRGB(160, 60, 60)
-    downBtn.TextSize = 20
-    Instance.new("UICorner", downBtn).CornerRadius = UDim.new(0, 10)
-    
-    local speedBtn = Instance.new("TextButton", mobileControlFrame)
-    speedBtn.Text = "⚡"
-    speedBtn.Size = UDim2.new(0, 50, 0, 50) -- أصغر
-    speedBtn.Position = UDim2.new(0.85, -25, 0.45, -25)
-    speedBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-    speedBtn.TextSize = 20
-    Instance.new("UICorner", speedBtn).CornerRadius = UDim.new(0, 10)
-    
-    -- متغيرات التحكم
+    -- إعدادات التحكم
     local joystickActive = false
     local joystickStartPos
     local joystickVector = Vector2.new(0, 0)
-    local upPressed = false
-    local downPressed = false
-    local speedBoost = false
+    local lastTouchTime = 0
+    local lastTouchPos
     
-    -- أحداث Joystick
-    joystickFrame.InputBegan:Connect(function(input)
+    -- أحداث التحكم
+    joystickOuter.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             joystickActive = true
             joystickStartPos = input.Position
         end
     end)
     
-    joystickFrame.InputChanged:Connect(function(input)
+    joystickOuter.InputChanged:Connect(function(input)
         if joystickActive and input.UserInputType == Enum.UserInputType.Touch then
             local currentPos = input.Position
             local delta = currentPos - joystickStartPos
-            local maxDistance = 30
+            local maxDistance = 35
             
             local direction = delta
             if direction.Magnitude > maxDistance then
                 direction = direction.Unit * maxDistance
             end
             
-            joystick.Position = UDim2.new(0.5, direction.X, 0.5, direction.Y)
+            mobileJoystick.Position = UDim2.new(0.5, direction.X, 0.5, direction.Y)
             joystickVector = Vector2.new(direction.X / maxDistance, direction.Y / maxDistance)
         end
     end)
     
-    joystickFrame.InputEnded:Connect(function(input)
+    joystickOuter.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
             joystickActive = false
-            joystick.Position = UDim2.new(0.5, -17.5, 0.5, -17.5)
+            mobileJoystick.Position = UDim2.new(0.5, -25, 0.5, -25)
             joystickVector = Vector2.new(0, 0)
         end
     end)
     
-    -- أحداث الأزرار
-    upBtn.MouseButton1Down:Connect(function() upPressed = true end)
-    upBtn.MouseButton1Up:Connect(function() upPressed = false end)
-    downBtn.MouseButton1Down:Connect(function() downPressed = true end)
-    downBtn.MouseButton1Up:Connect(function() downPressed = false end)
-    speedBtn.MouseButton1Down:Connect(function() speedBoost = true end)
-    speedBtn.MouseButton1Up:Connect(function() speedBoost = false end)
-    
-    -- جعل الإطار قابل للسحب
-    local dragging = false
-    local dragStart, startPos
-    
-    mobileControlFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch and input.Position.X > mobileControlFrame.AbsolutePosition.X + 50 then
-            dragging = true
-            dragStart = input.Position
-            startPos = mobileControlFrame.Position
-        end
-    end)
-    
-    mobileControlFrame.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - dragStart
-            mobileControlFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    
-    mobileControlFrame.InputEnded:Connect(function(input)
+    -- التحكم باللمس على الشاشة للارتفاع
+    screenGui.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
+            lastTouchTime = tick()
+            lastTouchPos = input.Position
+            
+            -- التحقق إذا كانت اللمسة خارج منطقة التحكم
+            if input.Position.Y < mobileControlsFrame.AbsolutePosition.Y then
+                -- إذا كان هناك لمسة سريعة مزدوجة، تغيير وضع الصعود/النزول
+                if tick() - lastTouchTime < 0.3 then
+                    -- يمكن إضافة منطق للصعود/النزول هنا
+                end
+            end
         end
     end)
     
+    -- إرجاع بيانات التحكم
     return {
         joystickVector = function() return joystickVector end,
-        upPressed = function() return upPressed end,
-        downPressed = function() return downPressed end,
-        speedBoost = function() return speedBoost end,
+        updateSpeed = function(speed)
+            flightInfo.Text = "✈️ FLIGHT MODE\nSpeed: " .. speed
+        end,
         destroy = function()
-            if mobileControlFrame then
-                mobileControlFrame:Destroy()
-                mobileControlFrame = nil
+            if mobileControlsFrame then
+                mobileControlsFrame:Destroy()
+                mobileControlsFrame = nil
             end
         end
     }
-end
-
--- 🔵 [5.2] دالة التحكم للجوال
-local function updateMobileControls()
-    if UserInputService.TouchEnabled and mobileControlsEnabled then
-        if not mobileControls then
-            mobileControls = createMobileControls()
-        end
-        return mobileControls
-    else
-        if mobileControls then
-            mobileControls.destroy()
-            mobileControls = nil
-        end
-        return nil
-    end
 end
 
 -- [5] FLIGHT SYSTEM FUNCTIONS (لجميع الأجهزة)
@@ -363,10 +296,11 @@ local function startFlight()
         end
     end
     
-    -- تحكم للجوال
-    if UserInputService.TouchEnabled and mobileControlsEnabled then
-        updateMobileControls()
-        print("📱 Mobile Flight Controls: Enabled")
+    -- إنشاء واجهة الجوال إذا كان الجهاز يدعم اللمس
+    local mobileUI = nil
+    if UserInputService.TouchEnabled then
+        mobileUI = createMobileFlightUI()
+        print("📱 Mobile Flight UI: Created")
     end
     
     if killModeEnabled then
@@ -388,6 +322,12 @@ local function startFlight()
     bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
     bodyVelocity.Parent = rootPart
     
+    -- تحكم خاص للجوال: اللمس على الشاشة للصعود/النزول
+    local lastTouchHeight = 0
+    local touchActive = false
+    local touchStartY = 0
+    local touchCurrentY = 0
+    
     flightConnection = RunService.Heartbeat:Connect(function()
         if not isFlying or not character then
             if flightConnection then flightConnection:Disconnect() end
@@ -398,38 +338,48 @@ local function startFlight()
         if not camera then return end
         
         local moveDirection = Vector3.new(0, 0, 0)
-        local controls = updateMobileControls()
         
-        if controls and UserInputService.TouchEnabled then
-            -- تحكم بالجوال
-            local joystickVec = controls.joystickVector()
-            local up = controls.upPressed()
-            local down = controls.downPressed()
-            local boost = controls.speedBoost()
+        -- التحكم بالجوال (لمس الشاشة)
+        if UserInputService.TouchEnabled and #UserInputService:GetTouches() > 0 then
+            local touches = UserInputService:GetTouches()
             
-            if joystickVec.Magnitude > 0.1 then
-                moveDirection = moveDirection + camera.CFrame.LookVector * joystickVec.Y
-                moveDirection = moveDirection + camera.CFrame.RightVector * joystickVec.X
+            -- البحث عن لمسة خارج منطقة التحكم (للصعود/النزول)
+            local foundTouchForHeight = false
+            for _, touch in pairs(touches) do
+                local touchPos = touch.Position
+                
+                -- التحقق إذا كانت اللمسة خارج منطقة التحكم السفلية
+                if touchPos.Y < (mobileControlsFrame and mobileControlsFrame.AbsolutePosition.Y or screenGui.AbsoluteSize.Y - 100) then
+                    foundTouchForHeight = true
+                    
+                    -- استخدام إحداثي Y للتحكم بالارتفاع
+                    local screenHeight = workspace.CurrentCamera.ViewportSize.Y
+                    local touchY = touchPos.Y
+                    local normalizedY = 1 - (touchY / screenHeight) -- تحويل إلى 0-1 (أسفل = 0، أعلى = 1)
+                    
+                    -- الصعود عندما يكون اللمس في الجزء العلوي من الشاشة
+                    if normalizedY < 0.3 then -- الجزء العلوي 30%
+                        moveDirection = moveDirection + Vector3.new(0, 1, 0)
+                        print("📱 Mobile: Ascending (touch top)")
+                    -- النزول عندما يكون اللمس في الجزء السفلي من الشاشة
+                    elseif normalizedY > 0.7 then -- الجزء السفلي 30%
+                        moveDirection = moveDirection - Vector3.new(0, 1, 0)
+                        print("📱 Mobile: Descending (touch bottom)")
+                    end
+                    break
+                end
             end
             
-            if up then
-                moveDirection = moveDirection + Vector3.new(0, 1, 0)
+            -- التحكم بالحركة الأمامية/الجانبية باستخدام Joystick
+            if mobileUI then
+                local joystickVec = mobileUI.joystickVector()
+                if joystickVec.Magnitude > 0.1 then
+                    moveDirection = moveDirection + camera.CFrame.LookVector * joystickVec.Y * 0.8
+                    moveDirection = moveDirection + camera.CFrame.RightVector * joystickVec.X * 0.8
+                end
             end
-            if down then
-                moveDirection = moveDirection - Vector3.new(0, 1, 0)
-            end
-            
-            local currentSpeed = flySpeed
-            if boost then
-                currentSpeed = flySpeed * 2
-            end
-            
-            if moveDirection.Magnitude > 0 then
-                moveDirection = moveDirection.Unit * currentSpeed
-            end
-            
         else
-            -- تحكم بالكيبورد (للحاسوب)
+            -- التحكم بالكيبورد (للحاسوب)
             if UserInputService:IsKeyDown(Enum.KeyCode.W) then
                 moveDirection = moveDirection + camera.CFrame.LookVector
             end
@@ -448,15 +398,17 @@ local function startFlight()
             if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
                 moveDirection = moveDirection - Vector3.new(0, 1, 0)
             end
-            
-            local currentSpeed = flySpeed
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-                currentSpeed = flySpeed * 2
-            end
-            
-            if moveDirection.Magnitude > 0 then
-                moveDirection = moveDirection.Unit * currentSpeed
-            end
+        end
+        
+        -- تطبيق السرعة
+        local currentSpeed = flySpeed
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) or 
+           (UserInputService.TouchEnabled and #UserInputService:GetTouches() >= 2) then
+            currentSpeed = flySpeed * 2
+        end
+        
+        if moveDirection.Magnitude > 0 then
+            moveDirection = moveDirection.Unit * currentSpeed
         end
         
         if bodyVelocity then
@@ -472,15 +424,13 @@ local function startFlight()
             if verticalVelocity < -200 then
                 bodyVelocity.Velocity = Vector3.new(bodyVelocity.Velocity.X, 0, bodyVelocity.Velocity.Z)
             end
-            
-            local maxHeight = 1000
-            if rootPart.Position.Y > maxHeight then
-                bodyVelocity.Velocity = Vector3.new(bodyVelocity.Velocity.X, -50, bodyVelocity.Velocity.Z)
-            end
         end
     end)
     
     print("🚀 FLIGHT SYSTEM: Activated | Speed: " .. flySpeed)
+    if UserInputService.TouchEnabled then
+        print("📱 Mobile Controls: Touch screen for altitude, Joystick for movement")
+    end
     
     if flightUIEnabled then
         showFlightUI()
@@ -494,9 +444,10 @@ local function stopFlight()
     if not isFlying then return end
     isFlying = false
     
-    if mobileControls then
-        mobileControls.destroy()
-        mobileControls = nil
+    -- إزالة واجهة الجوال
+    if mobileControlsFrame then
+        mobileControlsFrame:Destroy()
+        mobileControlsFrame = nil
     end
     
     if bodyGyro then bodyGyro:Destroy() end
@@ -550,23 +501,6 @@ local function toggleKillMode(state)
     end
 end
 
--- 🔵 [7] Mobile Controls Functions
-local function toggleMobileControls(state)
-    mobileControlsEnabled = state
-    if state then
-        print("📱 Mobile Controls: Enabled")
-        if isFlying then
-            updateMobileControls()
-        end
-    else
-        print("📱 Mobile Controls: Disabled")
-        if mobileControls then
-            mobileControls.destroy()
-            mobileControls = nil
-        end
-    end
-end
-
 local function toggleCoordinates(state)
     coordinatesEnabled = state
     
@@ -585,7 +519,7 @@ local function toggleCoordinates(state)
         coordGui.ResetOnSpawn = false
         
         local coordFrame = Instance.new("Frame", coordGui)
-        coordFrame.Size = UDim2.new(0, 150, 0, 40) -- أصغر
+        coordFrame.Size = UDim2.new(0, 150, 0, 40)
         coordFrame.Position = UDim2.new(1, -160, 1, -180)
         coordFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
         coordFrame.BackgroundTransparency = 0.2
@@ -610,7 +544,7 @@ local function toggleCoordinates(state)
     end
 end
 
--- [8] FLIGHT UI FUNCTIONS (أصغر)
+-- [8] FLIGHT UI FUNCTIONS
 local flightUIEnabled = false
 
 local function showFlightUI()
@@ -623,7 +557,7 @@ local function showFlightUI()
     flightScreenGui.ResetOnSpawn = false
     
     flightUIFrame = Instance.new("Frame", flightScreenGui)
-    flightUIFrame.Size = UDim2.new(0, 180, 0, 150) -- أصغر
+    flightUIFrame.Size = UDim2.new(0, 180, 0, 150)
     flightUIFrame.Position = UDim2.new(0, 15, 0.5, -75)
     flightUIFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     flightUIFrame.BackgroundTransparency = 0.2
@@ -803,9 +737,9 @@ local function CreateKeyGui()
     Background.BackgroundTransparency = 0.7
     Background.Parent = KeyGui
     
-    -- Main Window (أصغر)
+    -- Main Window
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 350, 0, 250) -- أصغر
+    MainFrame.Size = UDim2.new(0, 350, 0, 250)
     MainFrame.Position = UDim2.new(0.5, -175, 0.5, -125)
     MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     MainFrame.BorderSizePixel = 0
@@ -822,7 +756,7 @@ local function CreateKeyGui()
     
     -- Main Title
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0.9, 0, 0, 60) -- أصغر
+    Title.Size = UDim2.new(0.9, 0, 0, 60)
     Title.Position = UDim2.new(0.05, 0, 0.05, 0)
     Title.BackgroundTransparency = 1
     Title.Text = "🔐 RXT SCRIPT V10\n━━━━━━━━━━━━━━━━━━\n24 HOUR KEY SYSTEM"
@@ -834,7 +768,7 @@ local function CreateKeyGui()
     
     -- Key Section
     local KeyFrame = Instance.new("Frame")
-    KeyFrame.Size = UDim2.new(0.9, 0, 0, 70) -- أصغر
+    KeyFrame.Size = UDim2.new(0.9, 0, 0, 70)
     KeyFrame.Position = UDim2.new(0.05, 0, 0.35, 0)
     KeyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
     KeyFrame.Parent = MainFrame
@@ -853,7 +787,7 @@ local function CreateKeyGui()
     KeyLabel.Parent = KeyFrame
     
     local KeyBox = Instance.new("TextBox")
-    KeyBox.Size = UDim2.new(0.9, 0, 0, 35) -- أصغر
+    KeyBox.Size = UDim2.new(0.9, 0, 0, 35)
     KeyBox.Position = UDim2.new(0.05, 0, 0.5, 0)
     KeyBox.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     KeyBox.TextColor3 = Color3.new(1, 1, 1)
@@ -869,7 +803,7 @@ local function CreateKeyGui()
     
     -- Activate Button
     local ActivateBtn = Instance.new("TextButton")
-    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 40) -- أصغر
+    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 40)
     ActivateBtn.Position = UDim2.new(0.05, 0, 0.7, 0)
     ActivateBtn.BackgroundColor3 = Color3.fromRGB(120, 70, 220)
     ActivateBtn.Text = "⚡ ACTIVATE"
@@ -952,9 +886,9 @@ function CreateMainGui()
     ScreenGui.Name = "RXT_Master_V10"
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Main Window (أصغر)
+    -- Main Window
     local Main = Instance.new("Frame", ScreenGui)
-    Main.Size = UDim2.new(0, 320, 0, 400) -- أصغر
+    Main.Size = UDim2.new(0, 320, 0, 400)
     Main.Position = UDim2.new(0.5, -160, 0.5, -200)
     Main.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     Main.BorderSizePixel = 0
@@ -968,7 +902,7 @@ function CreateMainGui()
     UIStroke.Thickness = 3
     UIStroke.Parent = Main
     
-    -- Header (أصغر)
+    -- Header
     local Header = Instance.new("TextLabel", Main)
     Header.Size = UDim2.new(1, -20, 0, 60)
     Header.Position = UDim2.new(0, 10, 0, 10)
@@ -977,8 +911,8 @@ function CreateMainGui()
 👑 RXT V10
 ━━━━━━━━━━━━━
 ⚡ GHOST FARM FIX
-🚀 FLIGHT SYSTEM
-📱 MOBILE CONTROLS
+🚀 NATURAL FLIGHT
+📱 TOUCH CONTROLS
 ⚒️ 3zf & RXT
 🔐 Key: RXT24
 ]]
@@ -998,7 +932,7 @@ function CreateMainGui()
     CloseBtn.TextSize = 18
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
     
-    -- Floating Open Button (أصغر)
+    -- Floating Open Button
     local OpenBtn = Instance.new("TextButton", ScreenGui)
     OpenBtn.Size = UDim2.new(0, 50, 0, 50)
     OpenBtn.Position = UDim2.new(0, 15, 0.5, -25)
@@ -1074,7 +1008,7 @@ function CreateMainGui()
         end
     end)
     
-    -- Anti-AFK Status Indicator (أصغر)
+    -- Anti-AFK Status Indicator
     local afkStatus = Instance.new("TextLabel", ScreenGui)
     afkStatus.Size = UDim2.new(0, 180, 0, 30)
     afkStatus.Position = UDim2.new(1, -190, 1, -35)
@@ -1085,7 +1019,7 @@ function CreateMainGui()
     afkStatus.TextSize = 10
     Instance.new("UICorner", afkStatus)
     
-    -- Anti-AFK Timer Display (أصغر)
+    -- Anti-AFK Timer Display
     local afkTimer = Instance.new("TextLabel", ScreenGui)
     afkTimer.Size = UDim2.new(0, 180, 0, 20)
     afkTimer.Position = UDim2.new(1, -190, 1, -60)
@@ -1182,7 +1116,7 @@ function CreateMainGui()
     AddTab("TP", P4, "📍")
     AddTab("DEV", P5, "⚒️")
     
-    -- Toggle System (أصغر)
+    -- Toggle System
     local function AddToggle(parent, txt, current, cb)
         local b = Instance.new("TextButton", parent)
         b.Size = UDim2.new(1, 0, 0, 32)
@@ -1208,7 +1142,7 @@ function CreateMainGui()
         return b
     end
     
-    -- Button System (أصغر)
+    -- Button System
     local function AddButton(parent, txt, cb)
         local b = Instance.new("TextButton", parent)
         b.Size = UDim2.new(1, 0, 0, 32)
@@ -1253,7 +1187,7 @@ function CreateMainGui()
         infJumpEnabled = s
     end)
     
-    -- Speed Input (أصغر)
+    -- Speed Input
     local speedInput = Instance.new("TextBox", P1)
     speedInput.Name = "SpeedInput"
     speedInput.Size = UDim2.new(1, 0, 0, 30)
@@ -1305,14 +1239,16 @@ function CreateMainGui()
         toggleCoordinates(s)
     end)
     
-    -- Flight Instructions (أصغر)
+    -- Flight Instructions
     local flightInfo = Instance.new("TextLabel", P1)
     flightInfo.Size = UDim2.new(1, 0, 0, 50)
     flightInfo.BackgroundTransparency = 1
     flightInfo.Text = [[
-🎮 CONTROLS:
+🎮 FLIGHT CONTROLS:
 • PC: WASD + Space/Q
-• Mobile: Joystick + Buttons
+• Mobile: Touch screen
+• Top: Ascend
+• Bottom: Descend
 ]]
     flightInfo.TextColor3 = Color3.fromRGB(150, 200, 255)
     flightInfo.Font = Enum.Font.Gotham
@@ -1345,11 +1281,6 @@ function CreateMainGui()
         end
     end)
     
-    -- 🔵 Mobile Controls
-    AddToggle(P3, "📱 Mobile Controls", mobileControlsEnabled, function(s)
-        toggleMobileControls(s)
-    end)
-    
     -- 🔴 Kill Mode
     AddToggle(P3, "🔴 Kill Mode", killModeEnabled, function(s)
         toggleKillMode(s)
@@ -1378,16 +1309,22 @@ function CreateMainGui()
         end
     end)
     
-    -- Flight Instructions in WORLD tab (أصغر)
+    -- Flight Instructions in WORLD tab
     local flightControlsInfo = Instance.new("TextLabel", P3)
     flightControlsInfo.Text = [[
-🎮 FLIGHT CONTROLS:
-• PC: WASD + Space/Q
-• Mobile: Joystick + Arrows
-• ⚡: Speed Boost
-• Works on all devices
+📱 NATURAL MOBILE CONTROLS:
+• Touch TOP of screen: Ascend
+• Touch BOTTOM: Descend
+• Joystick: Move Forward/Back/Sides
+• Two fingers: Speed Boost
+
+🎮 PC CONTROLS:
+• WASD: Movement
+• Space: Ascend
+• Q: Descend
+• Shift: Speed Boost
 ]]
-    flightControlsInfo.Size = UDim2.new(1, 0, 0, 80)
+    flightControlsInfo.Size = UDim2.new(1, 0, 0, 120)
     flightControlsInfo.BackgroundTransparency = 1
     flightControlsInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
     flightControlsInfo.Font = Enum.Font.Gotham
@@ -1399,7 +1336,7 @@ function CreateMainGui()
         toggleFlightUI(s)
     end)
     
-    -- TP TAB (أصغر)
+    -- TP TAB
     local bSave = AddButton(P4, "📍 Save Position", function()
         if player.Character then
             savedPosition = player.Character.HumanoidRootPart.CFrame
@@ -1431,24 +1368,27 @@ function CreateMainGui()
         end
     end)
     
-    -- [[ ⚒️ Developer Tab ]] (أصغر)
+    -- [[ ⚒️ Developer Tab ]]
     local DevLabel = Instance.new("TextLabel", P5)
     DevLabel.Size = UDim2.new(1, 0, 0, 180)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
-⚒️ Developer Tools
-━━━━━━━━━━━━━━
-Developers: 3zf & RXT
-Version: V10
-Key System: 24 Hours
+⚒️ RXT V10 - NATURAL CONTROLS
+━━━━━━━━━━━━━━━━━━━━━━
+📱 Mobile: Touch screen controls
+• Top: Ascend
+• Bottom: Descend
+• Joystick: Movement
+• Natural like PC
 
-🛡️ Advanced Anti-AFK
-⚡ Speed System: 16-500
-🚀 FLIGHT SYSTEM
-📱 MOBILE CONTROLS
-🔴 KILL MODE Protection
+🎮 PC: Traditional controls
+• WASD + Space/Q
 
-Works on: PC & Mobile
+🚀 Features:
+• Anti-AFK System
+• Ghost Farm Collection
+• Kill Mode Protection
+• Compatible all devices
 ]]
     DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevLabel.Font = Enum.Font.GothamBold
@@ -1460,28 +1400,27 @@ Works on: PC & Mobile
         if flightUIFrame then
             flightUIFrame:Destroy()
         end
-        if mobileControls then
-            mobileControls.destroy()
+        if mobileControlsFrame then
+            mobileControlsFrame:Destroy()
         end
         task.wait(0.5)
         CreateKeyGui()
     end)
     
-    -- Footer (أصغر)
+    -- Footer
     local Footer = Instance.new("TextLabel", Main)
     Footer.Size = UDim2.new(1, 0, 0, 25)
     Footer.Position = UDim2.new(0, 0, 1, -25)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "RXT V10 | 24H KEY | FLIGHT + MOBILE"
+    Footer.Text = "RXT V10 | NATURAL TOUCH CONTROLS"
     Footer.TextColor3 = Color3.fromRGB(150, 100, 255)
     Footer.Font = Enum.Font.GothamBold
     Footer.TextSize = 9
     
-    print("👑 RXT V10 LOADED - COMPATIBLE WITH ALL DEVICES")
-    print("🚀 Flight System: Works on PC & Mobile")
-    print("📱 Mobile Controls: Auto-detected")
-    print("🔴 Kill Mode: Death protection")
-    print("✅ Ready for all platforms!")
+    print("👑 RXT V10 LOADED - NATURAL MOBILE CONTROLS")
+    print("📱 Mobile: Touch TOP to ascend, BOTTOM to descend")
+    print("🎮 PC: Traditional WASD + Space/Q controls")
+    print("🚀 Works naturally on all devices!")
 end
 
 -- Start with Key GUI
