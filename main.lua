@@ -586,103 +586,103 @@ local function CreateKeyGui()
     
     -- Main Window
     local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 400, 0, 300)
-    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    MainFrame.Size = UDim2.new(0, 350, 0, 250) -- أصغر حجم
+    MainFrame.Position = UDim2.new(0.5, -175, 0.5, -125)
     MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = KeyGui
     
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 15)
+    UICorner.CornerRadius = UDim.new(0, 12)
     UICorner.Parent = MainFrame
     
     local UIStroke = Instance.new("UIStroke")
     UIStroke.Color = Color3.fromRGB(150, 100, 255)
-    UIStroke.Thickness = 3
+    UIStroke.Thickness = 2
     UIStroke.Parent = MainFrame
     
     -- Main Title
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(0.9, 0, 0, 80)
+    Title.Size = UDim2.new(0.9, 0, 0, 60)
     Title.Position = UDim2.new(0.05, 0, 0.05, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "🔐 RXT SCRIPT V10\n━━━━━━━━━━━━━━━━━━\n24 HOUR KEY SYSTEM"
+    Title.Text = "🔐 RXT V10\n━━━━━━━━━━\n24 HOUR KEY"
     Title.TextColor3 = Color3.fromRGB(170, 120, 255)
     Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 20
+    Title.TextSize = 16
     Title.TextXAlignment = Enum.TextXAlignment.Center
     Title.Parent = MainFrame
     
     -- Key Section
     local KeyFrame = Instance.new("Frame")
-    KeyFrame.Size = UDim2.new(0.9, 0, 0, 80)
-    KeyFrame.Position = UDim2.new(0.05, 0, 0.4, 0)
+    KeyFrame.Size = UDim2.new(0.9, 0, 0, 70)
+    KeyFrame.Position = UDim2.new(0.05, 0, 0.35, 0)
     KeyFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
     KeyFrame.Parent = MainFrame
     
     local KeyUICorner = Instance.new("UICorner")
-    KeyUICorner.CornerRadius = UDim.new(0, 12)
+    KeyUICorner.CornerRadius = UDim.new(0, 10)
     KeyUICorner.Parent = KeyFrame
     
     local KeyLabel = Instance.new("TextLabel")
-    KeyLabel.Size = UDim2.new(1, 0, 0, 30)
+    KeyLabel.Size = UDim2.new(1, 0, 0, 25)
     KeyLabel.BackgroundTransparency = 1
-    KeyLabel.Text = "🔑 ENTER KEY: RXT24"
+    KeyLabel.Text = "🔑 KEY: RXT24"
     KeyLabel.TextColor3 = Color3.new(1, 1, 1)
     KeyLabel.Font = Enum.Font.GothamBold
-    KeyLabel.TextSize = 16
+    KeyLabel.TextSize = 14
     KeyLabel.Parent = KeyFrame
     
     local KeyBox = Instance.new("TextBox")
-    KeyBox.Size = UDim2.new(0.9, 0, 0, 40)
+    KeyBox.Size = UDim2.new(0.9, 0, 0, 35)
     KeyBox.Position = UDim2.new(0.05, 0, 0.5, 0)
     KeyBox.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     KeyBox.TextColor3 = Color3.new(1, 1, 1)
     KeyBox.Font = Enum.Font.GothamBold
-    KeyBox.TextSize = 16
+    KeyBox.TextSize = 14
     KeyBox.PlaceholderText = "Type RXT24 here..."
     KeyBox.Text = ""
     KeyBox.Parent = KeyFrame
     
     local KeyBoxCorner = Instance.new("UICorner")
-    KeyBoxCorner.CornerRadius = UDim.new(0, 10)
+    KeyBoxCorner.CornerRadius = UDim.new(0, 8)
     KeyBoxCorner.Parent = KeyBox
     
     -- Activate Button
     local ActivateBtn = Instance.new("TextButton")
-    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 50)
+    ActivateBtn.Size = UDim2.new(0.9, 0, 0, 40)
     ActivateBtn.Position = UDim2.new(0.05, 0, 0.75, 0)
     ActivateBtn.BackgroundColor3 = Color3.fromRGB(120, 70, 220)
-    ActivateBtn.Text = "⚡ ACTIVATE SCRIPT"
+    ActivateBtn.Text = "⚡ ACTIVATE"
     ActivateBtn.TextColor3 = Color3.new(1, 1, 1)
     ActivateBtn.Font = Enum.Font.GothamBold
-    ActivateBtn.TextSize = 18
+    ActivateBtn.TextSize = 16
     ActivateBtn.Parent = MainFrame
     
     local ActivateCorner = Instance.new("UICorner")
-    ActivateCorner.CornerRadius = UDim.new(0, 12)
+    ActivateCorner.CornerRadius = UDim.new(0, 10)
     ActivateCorner.Parent = ActivateBtn
     
     -- Status Message
     local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(0.9, 0, 0, 30)
-    StatusLabel.Position = UDim2.new(0.05, 0, 0.9, 0)
+    StatusLabel.Size = UDim2.new(0.9, 0, 0, 25)
+    StatusLabel.Position = UDim2.new(0.05, 0, 0.92, 0)
     StatusLabel.BackgroundTransparency = 1
-    StatusLabel.Text = "⌛ Enter key to activate the script"
+    StatusLabel.Text = "⌛ Enter key to activate"
     StatusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     StatusLabel.Font = Enum.Font.Gotham
-    StatusLabel.TextSize = 14
+    StatusLabel.TextSize = 12
     StatusLabel.Parent = MainFrame
     
     -- Developers Text
     local DevText = Instance.new("TextLabel")
-    DevText.Size = UDim2.new(1, 0, 0, 30)
-    DevText.Position = UDim2.new(0, 0, 1, -30)
+    DevText.Size = UDim2.new(1, 0, 0, 20)
+    DevText.Position = UDim2.new(0, 0, 1, -20)
     DevText.BackgroundTransparency = 1
-    DevText.Text = "⚒️ Developed by 3zf & RXT | V10"
+    DevText.Text = "⚒️ 3zf & RXT | V10"
     DevText.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevText.Font = Enum.Font.GothamBold
-    DevText.TextSize = 12
+    DevText.TextSize = 11
     DevText.Parent = MainFrame
     
     -- Activation Function
@@ -690,7 +690,7 @@ local function CreateKeyGui()
         local enteredKey = KeyBox.Text:upper():gsub("%s+", "")
         
         if enteredKey == "RXT24" then
-            StatusLabel.Text = "✅ Activated Successfully! Loading..."
+            StatusLabel.Text = "✅ Activated! Loading..."
             StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
             
             -- Success effect
@@ -701,15 +701,15 @@ local function CreateKeyGui()
             KeyGui:Destroy()
             CreateMainGui()
         else
-            StatusLabel.Text = "❌ Wrong Key! Correct Key: RXT24"
+            StatusLabel.Text = "❌ Wrong Key! Use: RXT24"
             StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
             
             -- Error effect
-            ActivateBtn.Text = "❌ WRONG KEY!"
+            ActivateBtn.Text = "❌ WRONG!"
             ActivateBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
             
             task.wait(1)
-            ActivateBtn.Text = "⚡ ACTIVATE SCRIPT"
+            ActivateBtn.Text = "⚡ ACTIVATE"
             ActivateBtn.BackgroundColor3 = Color3.fromRGB(120, 70, 220)
         end
     end)
@@ -726,7 +726,7 @@ local function CreateKeyGui()
     return KeyGui
 end
 
--- [[ 🎨 Main GUI ]] --
+-- [[ 🎨 Main GUI (أصغر) ]] --
 function CreateMainGui()
     if CoreGui:FindFirstChild("RXT_Master_V10") then
         CoreGui["RXT_Master_V10"]:Destroy()
@@ -737,58 +737,57 @@ function CreateMainGui()
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
     local Main = Instance.new("Frame", ScreenGui)
-    Main.Size = UDim2.new(0, 380, 0, 520)
-    Main.Position = UDim2.new(0.5, -190, 0.5, -260)
+    Main.Size = UDim2.new(0, 320, 0, 420) -- أصغر من السابق
+    Main.Position = UDim2.new(0.5, -160, 0.5, -210)
     Main.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
     Main.BorderSizePixel = 0
     
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 15)
+    UICorner.CornerRadius = UDim.new(0, 12)
     UICorner.Parent = Main
     
     local UIStroke = Instance.new("UIStroke")
     UIStroke.Color = Color3.fromRGB(150, 100, 255)
-    UIStroke.Thickness = 3
+    UIStroke.Thickness = 2
     UIStroke.Parent = Main
     
-    -- Header
+    -- Header (أصغر)
     local Header = Instance.new("TextLabel", Main)
-    Header.Size = UDim2.new(1, -20, 0, 80)
+    Header.Size = UDim2.new(1, -15, 0, 70)
     Header.Position = UDim2.new(0, 10, 0, 10)
     Header.BackgroundTransparency = 1
     Header.Text = [[
-👑 RXT SERVER V10
-━━━━━━━━━━━━━━━━
-⚡ GHOST FARM FIX
-🚀 FLIGHT SYSTEM
+👑 RXT V10
+━━━━━━━━
+⚡ GHOST FARM
+🚀 FLIGHT
 ⚒️ 3zf & RXT
-🔐 Key: RXT24
 ]]
     Header.TextColor3 = Color3.fromRGB(170, 120, 255)
     Header.Font = Enum.Font.GothamBold
-    Header.TextSize = 14
+    Header.TextSize = 12
     Header.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- Close Button
+    -- Close Button (أصغر)
     local CloseBtn = Instance.new("TextButton", Main)
-    CloseBtn.Size = UDim2.new(0, 35, 0, 35)
-    CloseBtn.Position = UDim2.new(1, -45, 0, 15)
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -40, 0, 10)
     CloseBtn.Text = "✕"
     CloseBtn.BackgroundColor3 = Color3.fromRGB(220, 70, 70)
     CloseBtn.TextColor3 = Color3.new(1, 1, 1)
     CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.TextSize = 20
+    CloseBtn.TextSize = 16
     Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(1, 0)
     
-    -- Floating Open Button (Movable)
+    -- Floating Open Button (Movable) (أصغر)
     local OpenBtn = Instance.new("TextButton", ScreenGui)
-    OpenBtn.Size = UDim2.new(0, 60, 0, 60)
-    OpenBtn.Position = UDim2.new(0, 20, 0.5, -30)
+    OpenBtn.Size = UDim2.new(0, 50, 0, 50)
+    OpenBtn.Position = UDim2.new(0, 15, 0.5, -25)
     OpenBtn.BackgroundColor3 = Color3.fromRGB(40, 30, 70)
     OpenBtn.Text = "RXT\nV10"
     OpenBtn.TextColor3 = Color3.fromRGB(170, 120, 255)
     OpenBtn.Font = Enum.Font.GothamBold
-    OpenBtn.TextSize = 16
+    OpenBtn.TextSize = 14
     OpenBtn.Visible = false
     Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(1, 0)
     
@@ -856,26 +855,26 @@ function CreateMainGui()
         end
     end)
     
-    -- Anti-AFK Status Indicator
+    -- Anti-AFK Status Indicator (أصغر)
     local afkStatus = Instance.new("TextLabel", ScreenGui)
-    afkStatus.Size = UDim2.new(0, 200, 0, 35)
-    afkStatus.Position = UDim2.new(1, -210, 1, -40)
+    afkStatus.Size = UDim2.new(0, 180, 0, 30)
+    afkStatus.Position = UDim2.new(1, -190, 1, -35)
     afkStatus.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
     afkStatus.TextColor3 = Color3.new(1, 1, 1)
     afkStatus.Text = "🟢 ANTI-AFK: ON (15min)"
     afkStatus.Font = Enum.Font.GothamBold
-    afkStatus.TextSize = 12
+    afkStatus.TextSize = 11
     Instance.new("UICorner", afkStatus)
     
-    -- Anti-AFK Timer Display
+    -- Anti-AFK Timer Display (أصغر)
     local afkTimer = Instance.new("TextLabel", ScreenGui)
-    afkTimer.Size = UDim2.new(0, 200, 0, 25)
-    afkTimer.Position = UDim2.new(1, -210, 1, -70)
+    afkTimer.Size = UDim2.new(0, 180, 0, 20)
+    afkTimer.Position = UDim2.new(1, -190, 1, -60)
     afkTimer.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     afkTimer.TextColor3 = Color3.new(1, 1, 1)
     afkTimer.Text = "Next: 15:00"
     afkTimer.Font = Enum.Font.Gotham
-    afkTimer.TextSize = 11
+    afkTimer.TextSize = 10
     Instance.new("UICorner", afkTimer)
     
     -- Update AFK status and timer
@@ -912,38 +911,38 @@ function CreateMainGui()
     
     UpdateAFKStatus()
     
-    -- Discord reminder
+    -- Discord reminder (أصغر)
     task.spawn(function()
         while true do
             task.wait(120)
             local Alert = Instance.new("TextLabel", ScreenGui)
-            Alert.Size = UDim2.new(0, 300, 0, 40)
-            Alert.Position = UDim2.new(0.5, -150, 1, -50)
+            Alert.Size = UDim2.new(0, 250, 0, 35)
+            Alert.Position = UDim2.new(0.5, -125, 1, -45)
             Alert.BackgroundColor3 = Color3.fromRGB(70, 40, 140)
             Alert.TextColor3 = Color3.new(1, 1, 1)
-            Alert.Text = "📢 Enjoy RXT Script V10!"
+            Alert.Text = "📢 RXT V10 Active!"
             Alert.Font = Enum.Font.GothamBold
-            Alert.TextSize = 13
+            Alert.TextSize = 12
             Instance.new("UICorner", Alert)
             task.wait(5)
             Alert:Destroy()
         end
     end)
     
-    -- Tabs
+    -- Tabs (أصغر)
     local TabHolder = Instance.new("Frame", Main)
-    TabHolder.Size = UDim2.new(1, -20, 0, 40)
-    TabHolder.Position = UDim2.new(0, 10, 0, 100)
+    TabHolder.Size = UDim2.new(1, -15, 0, 35)
+    TabHolder.Position = UDim2.new(0, 10, 0, 85)
     TabHolder.BackgroundTransparency = 1
     
     local TabList = Instance.new("UIListLayout", TabHolder)
     TabList.FillDirection = Enum.FillDirection.Horizontal
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    TabList.Padding = UDim.new(0, 8)
+    TabList.Padding = UDim.new(0, 6)
     
     local Pages = Instance.new("Frame", Main)
-    Pages.Size = UDim2.new(1, -20, 1, -150)
-    Pages.Position = UDim2.new(0, 10, 0, 150)
+    Pages.Size = UDim2.new(1, -15, 1, -135)
+    Pages.Position = UDim2.new(0, 10, 0, 130)
     Pages.BackgroundTransparency = 1
     
     local function CreatePage()
@@ -952,7 +951,13 @@ function CreateMainGui()
         p.BackgroundTransparency = 1
         p.Visible = false
         p.ScrollBarThickness = 0
-        Instance.new("UIListLayout", p).Padding = UDim.new(0, 10)
+        p.CanvasSize = UDim2.new(0, 0, 0, 0)
+        local list = Instance.new("UIListLayout", p)
+        list.Padding = UDim.new(0, 8)
+        
+        list:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            p.CanvasSize = UDim2.new(0, 0, 0, list.AbsoluteContentSize.Y)
+        end)
         return p
     end
     
@@ -965,12 +970,12 @@ function CreateMainGui()
     
     local function AddTab(t, pg, icon)
         local b = Instance.new("TextButton", TabHolder)
-        b.Size = UDim2.new(0, 70, 1, 0)
-        b.Text = icon .. " " .. t
+        b.Size = UDim2.new(0, 60, 1, 0)
+        b.Text = icon .. t
         b.TextColor3 = Color3.new(1, 1, 1)
         b.BackgroundTransparency = 1
         b.Font = Enum.Font.GothamBold
-        b.TextSize = 11
+        b.TextSize = 10
         b.MouseButton1Click:Connect(function()
             P1.Visible = false; P2.Visible = false; P3.Visible = false
             P4.Visible = false; P5.Visible = false
@@ -984,14 +989,15 @@ function CreateMainGui()
     AddTab("TP", P4, "📍")
     AddTab("DEV", P5, "⚒️")
     
-    -- Toggle System
+    -- Toggle System (أصغر)
     local function AddToggle(parent, txt, current, cb)
         local b = Instance.new("TextButton", parent)
-        b.Size = UDim2.new(1, 0, 0, 40)
+        b.Size = UDim2.new(1, 0, 0, 35)
         b.Text = txt .. " : OFF"
         b.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
         b.TextColor3 = Color3.new(1, 1, 1)
         b.Font = Enum.Font.GothamBold
+        b.TextSize = 12
         Instance.new("UICorner", b)
         
         local state = current
@@ -1009,14 +1015,15 @@ function CreateMainGui()
         return b
     end
     
-    -- Button System
+    -- Button System (أصغر)
     local function AddButton(parent, txt, cb)
         local b = Instance.new("TextButton", parent)
-        b.Size = UDim2.new(1, 0, 0, 40)
+        b.Size = UDim2.new(1, 0, 0, 35)
         b.Text = txt
         b.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
         b.TextColor3 = Color3.new(1, 1, 1)
         b.Font = Enum.Font.GothamBold
+        b.TextSize = 12
         Instance.new("UICorner", b)
         b.MouseButton1Click:Connect(cb)
         return b
@@ -1024,14 +1031,10 @@ function CreateMainGui()
     
     -- [ Main Buttons ]
     -- Anti-AFK Toggle
-    AddToggle(P1, "🛡️ Anti-AFK (15min)", antiAFKEnabled, function(s)
+    AddToggle(P1, "🛡️ Anti-AFK", antiAFKEnabled, function(s)
         antiAFKEnabled = s
         ToggleAntiAFK(s)
         UpdateAFKStatus()
-    end)
-    
-    AddToggle(P1, "🚫 No Ragdoll", noRagdollEnabled, function(s)
-        noRagdollEnabled = s
     end)
     
     AddToggle(P1, "🧱 NoClip", noclipEnabled, function(s)
@@ -1049,31 +1052,31 @@ function CreateMainGui()
         end
     end)
     
-    AddToggle(P1, "🦘 Infinite Jump", infJumpEnabled, function(s)
+    AddToggle(P1, "🦘 Inf Jump", infJumpEnabled, function(s)
         infJumpEnabled = s
     end)
     
-    -- Speed Input (FIXED)
-    local speedInput = Instance.new("TextBox", P1)
+    -- Speed Input (أصغر)
+    speedInput = Instance.new("TextBox", P1)
     speedInput.Name = "SpeedInput"
-    speedInput.Size = UDim2.new(1, 0, 0, 35)
+    speedInput.Size = UDim2.new(1, 0, 0, 30)
     speedInput.PlaceholderText = "Speed (16-500)"
     speedInput.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     speedInput.TextColor3 = Color3.new(1, 1, 1)
     speedInput.Font = Enum.Font.Gotham
-    speedInput.TextSize = 14
+    speedInput.TextSize = 12
     speedInput.Text = "50"
     Instance.new("UICorner", speedInput)
     
-    -- Speed Toggle (FIXED)
-    AddToggle(P1, "🚀 Stealth Speed", stealthSpeedEnabled, function(s)
+    -- Speed Toggle
+    AddToggle(P1, "🚀 Speed", stealthSpeedEnabled, function(s)
         stealthSpeedEnabled = s
         if s then
             -- Update speed value from input
             speedValue = tonumber(speedInput.Text) or 50
-            print("✅ Stealth Speed: ON | Speed: " .. speedValue)
+            print("✅ Speed: ON | Value: " .. speedValue)
         else
-            print("❌ Stealth Speed: OFF")
+            print("❌ Speed: OFF")
         end
         UpdateSpeed() -- Update the speed connection
     end)
@@ -1091,7 +1094,7 @@ function CreateMainGui()
             else
                 speedValue = newSpeed
             end
-            print("📊 Speed updated to: " .. speedValue)
+            print("📊 Speed: " .. speedValue)
             
             -- Update speed if stealth speed is enabled
             if stealthSpeedEnabled then
@@ -1104,28 +1107,28 @@ function CreateMainGui()
     end)
     
     -- Coordinates Toggle in MAIN tab
-    AddToggle(P1, "📍 Show Coordinates", coordinatesEnabled, function(s)
+    AddToggle(P1, "📍 Coords", coordinatesEnabled, function(s)
         toggleCoordinates(s)
     end)
     
-    -- Flight Instructions in MAIN
+    -- Flight Info (أصغر)
     local flightInfo = Instance.new("TextLabel", P1)
-    flightInfo.Size = UDim2.new(1, 0, 0, 60)
+    flightInfo.Size = UDim2.new(1, 0, 0, 50)
     flightInfo.BackgroundTransparency = 1
     flightInfo.Text = [[
-🎮 FLIGHT CONTROLS:
-WASD - Movement
-SPACE - Fly Up
-Q - Fly Down
-SHIFT - Speed Boost
+🎮 FLIGHT:
+WASD - Move
+SPACE - Up
+Q - Down
+SHIFT - Boost
 ]]
     flightInfo.TextColor3 = Color3.fromRGB(150, 200, 255)
     flightInfo.Font = Enum.Font.Gotham
-    flightInfo.TextSize = 12
+    flightInfo.TextSize = 10
     flightInfo.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- EVENT TAB
-    AddToggle(P2, "☢️ Radioactive Farm", radioactiveFarmEnabled, function(s)
+    -- EVENT TAB (أصغر)
+    AddToggle(P2, "☢️ Farm", radioactiveFarmEnabled, function(s)
         radioactiveFarmEnabled = s
     end)
     
@@ -1140,10 +1143,10 @@ SHIFT - Speed Boost
         end
     end)
     
-    -- [[ 🌎 WORLD TAB WITH FLIGHT SYSTEM ]] --
+    -- [[ 🌎 WORLD TAB ]] --
     
     -- Flight System in WORLD tab
-    AddToggle(P3, "✈️ Flight System", isFlying, function(s)
+    AddToggle(P3, "✈️ Flight", isFlying, function(s)
         if s then 
             startFlight()
         else 
@@ -1151,7 +1154,7 @@ SHIFT - Speed Boost
         end
     end)
     
-    AddToggle(P3, "⚡ FPS BOOST", false, function(s)
+    AddToggle(P3, "⚡ FPS Boost", false, function(s)
         if s then
             for _, v in pairs(game:GetDescendants()) do
                 if v:IsA("BasePart") then
@@ -1161,75 +1164,77 @@ SHIFT - Speed Boost
         end
     end)
     
-    AddToggle(P3, "👁️ Unlock Zoom", false, function(s)
+    AddToggle(P3, "👁️ Zoom", false, function(s)
         if s then
             player.CameraMaxZoomDistance = 100000
         end
     end)
     
-    AddToggle(P3, "💡 Full Bright", false, function(s)
+    AddToggle(P3, "💡 Bright", false, function(s)
         if s then
             Lighting.Brightness = 2
             Lighting.ClockTime = 14
         end
     end)
     
-    -- Current Flight Speed Display
+    -- Current Flight Speed Display (أصغر)
     local currentSpeedDisplay = Instance.new("TextLabel", P3)
-    currentSpeedDisplay.Text = "Current Flight Speed: " .. flySpeed
-    currentSpeedDisplay.Size = UDim2.new(1, 0, 0, 25)
+    currentSpeedDisplay.Text = "Flight Speed: " .. flySpeed
+    currentSpeedDisplay.Size = UDim2.new(1, 0, 0, 20)
     currentSpeedDisplay.BackgroundTransparency = 1
     currentSpeedDisplay.TextColor3 = Color3.new(1, 1, 1)
     currentSpeedDisplay.Font = Enum.Font.GothamBold
-    currentSpeedDisplay.TextSize = 16
+    currentSpeedDisplay.TextSize = 14
     currentSpeedDisplay.Name = "CurrentSpeedDisplay"
     
     -- Flight UI Toggle
-    AddToggle(P3, "📊 Show Flight UI", flightUIEnabled, function(s)
+    AddToggle(P3, "📊 Flight UI", flightUIEnabled, function(s)
         toggleFlightUI(s)
     end)
     
-    -- Flight Instructions in WORLD tab
+    -- Flight Instructions (أصغر)
     local flightControlsInfo = Instance.new("TextLabel", P3)
     flightControlsInfo.Text = [[
-🎮 FLIGHT CONTROLS:
-• Turn ON Flight System
-• Adjust speed in Flight UI
-• Space: Up | Q: Down
-• Shift: Speed Boost
-• W/A/S/D: Movement
+🎮 FLIGHT:
+• Turn ON Flight
+• Adjust in UI
+• Space: Up
+• Q: Down
+• Shift: Boost
 ]]
-    flightControlsInfo.Size = UDim2.new(1, 0, 0, 80)
+    flightControlsInfo.Size = UDim2.new(1, 0, 0, 70)
     flightControlsInfo.BackgroundTransparency = 1
     flightControlsInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
     flightControlsInfo.Font = Enum.Font.Gotham
-    flightControlsInfo.TextSize = 11
+    flightControlsInfo.TextSize = 10
     flightControlsInfo.TextYAlignment = Enum.TextYAlignment.Top
     
-    -- TP TAB
+    -- TP TAB (أصغر)
     local bSave = Instance.new("TextButton", P4)
-    bSave.Size = UDim2.new(1, 0, 0, 40)
-    bSave.Text = "📍 Save Position"
+    bSave.Size = UDim2.new(1, 0, 0, 35)
+    bSave.Text = "📍 Save Pos"
     bSave.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     bSave.TextColor3 = Color3.new(1, 1, 1)
     bSave.Font = Enum.Font.GothamBold
+    bSave.TextSize = 12
     Instance.new("UICorner", bSave)
     
     bSave.MouseButton1Click:Connect(function()
         if player.Character then
             savedPosition = player.Character.HumanoidRootPart.CFrame
-            bSave.Text = "✅ Position Saved!"
+            bSave.Text = "✅ Saved!"
             task.wait(1)
-            bSave.Text = "📍 Save Position"
+            bSave.Text = "📍 Save Pos"
         end
     end)
     
     local bTP = Instance.new("TextButton", P4)
-    bTP.Size = UDim2.new(1, 0, 0, 40)
-    bTP.Text = "🌀 Ghost Smooth TP"
+    bTP.Size = UDim2.new(1, 0, 0, 35)
+    bTP.Text = "🌀 TP to Saved"
     bTP.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     bTP.TextColor3 = Color3.new(1, 1, 1)
     bTP.Font = Enum.Font.GothamBold
+    bTP.TextSize = 12
     Instance.new("UICorner", bTP)
     
     bTP.MouseButton1Click:Connect(function()
@@ -1254,52 +1259,44 @@ SHIFT - Speed Boost
         end
     end)
     
-    -- [[ ⚒️ Developer Tab ]] --
+    -- [[ ⚒️ Developer Tab (أصغر) ]] --
     local DevLabel = Instance.new("TextLabel", P5)
-    DevLabel.Size = UDim2.new(1, 0, 0, 200)
+    DevLabel.Size = UDim2.new(1, 0, 0, 150)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
 ⚒️ Developer Tools
-━━━━━━━━━━━━━━
-Developers:
-• 3zf
-• RXT
+━━━━━━━━━━
+• 3zf & RXT
+• V10
+• Key: RXT24
 
-Version: V10
-Key System: 24 Hours
-Safe Ghost Farm
+🛡️ Anti-AFK:
+• Every 15min
+• Micro moves
+• Camera adjust
 
-🛡️ Advanced Anti-AFK:
-• Every 15 Minutes
-• Micro Movements
-• Camera Adjustment
-• Toggle On/Off
-• Timer Display
+⚡ Speed:
+• Real-time
+• 16-500 range
 
-⚡ Speed System (FIXED):
-• Real-time updates
-• Range: 16-500
-• Smooth transition
-• Works with all features
-
-🚀 FLIGHT SYSTEM:
-• Turn ON in WORLD tab
-• Adjust speed in Flight UI
-• Quick presets: 500/1000/5000
-• Height coordinates display
+🚀 FLIGHT:
+• Turn ON in WORLD
+• Adjust in UI
+• 500/1000/5000
 ]]
     DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevLabel.Font = Enum.Font.GothamBold
-    DevLabel.TextSize = 14
+    DevLabel.TextSize = 12
     DevLabel.TextYAlignment = Enum.TextYAlignment.Top
     
     local ReloadBtn = Instance.new("TextButton", P5)
-    ReloadBtn.Size = UDim2.new(1, 0, 0, 40)
-    ReloadBtn.Position = UDim2.new(0, 0, 0, 210)
-    ReloadBtn.Text = "🔄 Reload Script"
+    ReloadBtn.Size = UDim2.new(1, 0, 0, 35)
+    ReloadBtn.Position = UDim2.new(0, 0, 0, 160)
+    ReloadBtn.Text = "🔄 Reload"
     ReloadBtn.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     ReloadBtn.TextColor3 = Color3.new(1, 1, 1)
     ReloadBtn.Font = Enum.Font.GothamBold
+    ReloadBtn.TextSize = 12
     Instance.new("UICorner", ReloadBtn)
     
     ReloadBtn.MouseButton1Click:Connect(function()
@@ -1311,20 +1308,19 @@ Safe Ghost Farm
         CreateKeyGui()
     end)
     
-    -- Footer
+    -- Footer (أصغر)
     local Footer = Instance.new("TextLabel", Main)
-    Footer.Size = UDim2.new(1, 0, 0, 30)
-    Footer.Position = UDim2.new(0, 0, 1, -30)
+    Footer.Size = UDim2.new(1, 0, 0, 25)
+    Footer.Position = UDim2.new(0, 0, 1, -25)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | FLIGHT SYSTEM IN WORLD TAB"
+    Footer.Text = "RXT V10 | 24H KEY | FLIGHT IN WORLD"
     Footer.TextColor3 = Color3.fromRGB(150, 100, 255)
     Footer.Font = Enum.Font.GothamBold
-    Footer.TextSize = 11
+    Footer.TextSize = 10
     
-    print("👑 RXT MASTER V10 LOADED - WITH FLIGHT SYSTEM")
-    print("🚀 Flight System: Moved to WORLD tab")
-    print("✅ Speed Control Buttons: Removed from WORLD tab")
-    print("📍 Coordinates: Turn ON in MAIN tab")
+    print("👑 RXT V10 LOADED - COMPACT UI")
+    print("🚀 All features preserved")
+    print("📏 Smaller interface")
 end
 
 -- Start with Key GUI
