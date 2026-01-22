@@ -1,4 +1,4 @@
--- [[ 👑 RXT SERVER - V10 GHOST FARM FIX - Key System ]] + FLIGHT SYSTEM
+-- [[ 👑 RXT SERVER - V10 GHOST FARM FIX - Key System ]] + FLIGHT SYSTEM + MOBILE CONTROLS
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -32,6 +32,10 @@ local bodyVelocity, bodyGyro
 local coordinatesEnabled = false
 local coordinatesConnection
 local flightUIFrame
+local killModeEnabled = false -- 🔴 وضع الحماية من الموت
+local mobileControlsEnabled = false -- 🔵 تحكم للجوال
+local mobileControlFrame
+local mobileControls
 
 -- [[ 🛠️ Backend Functions ]] --
 
@@ -197,7 +201,183 @@ task.spawn(function()
     end
 end)
 
--- [5] FLIGHT SYSTEM FUNCTIONS
+-- 🔵 [5.1] دالة لإنشاء واجهة تحكم للجوال
+local function createMobileControls()
+    if mobileControlFrame then
+        mobileControlFrame:Destroy()
+    end
+    
+    if not UserInputService.TouchEnabled then return end
+    
+    local screenGui = Instance.new("ScreenGui", CoreGui)
+    screenGui.Name = "RXT_MobileFlightControls"
+    screenGui.ResetOnSpawn = false
+    
+    mobileControlFrame = Instance.new("Frame", screenGui)
+    mobileControlFrame.Size = UDim2.new(0, 300, 0, 300)
+    mobileControlFrame.Position = UDim2.new(0.5, -150, 1, -320)
+    mobileControlFrame.BackgroundTransparency = 0.7
+    mobileControlFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 40)
+    
+    Instance.new("UICorner", mobileControlFrame).CornerRadius = UDim.new(0, 20)
+    
+    -- عنوان التحكم
+    local title = Instance.new("TextLabel", mobileControlFrame)
+    title.Text = "✈️ Mobile Flight Controls"
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.BackgroundTransparency = 1
+    title.TextColor3 = Color3.new(1, 1, 1)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 16
+    
+    -- Joystick للحركة
+    local joystickFrame = Instance.new("Frame", mobileControlFrame)
+    joystickFrame.Size = UDim2.new(0, 120, 0, 120)
+    joystickFrame.Position = UDim2.new(0, 30, 0.5, -60)
+    joystickFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+    joystickFrame.BackgroundTransparency = 0.5
+    Instance.new("UICorner", joystickFrame).CornerRadius = UDim.new(1, 0)
+    
+    local joystick = Instance.new("Frame", joystickFrame)
+    joystick.Size = UDim2.new(0, 40, 0, 40)
+    joystick.Position = UDim2.new(0.5, -20, 0.5, -20)
+    joystick.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
+    Instance.new("UICorner", joystick).CornerRadius = UDim.new(1, 0)
+    
+    -- أزرار التحكم
+    local upBtn = Instance.new("TextButton", mobileControlFrame)
+    upBtn.Text = "⬆️"
+    upBtn.Size = UDim2.new(0, 60, 0, 60)
+    upBtn.Position = UDim2.new(0.7, -30, 0.2, -30)
+    upBtn.BackgroundColor3 = Color3.fromRGB(60, 160, 60)
+    upBtn.TextSize = 24
+    Instance.new("UICorner", upBtn).CornerRadius = UDim.new(0, 15)
+    
+    local downBtn = Instance.new("TextButton", mobileControlFrame)
+    downBtn.Text = "⬇️"
+    downBtn.Size = UDim2.new(0, 60, 0, 60)
+    downBtn.Position = UDim2.new(0.7, -30, 0.8, -30)
+    downBtn.BackgroundColor3 = Color3.fromRGB(160, 60, 60)
+    downBtn.TextSize = 24
+    Instance.new("UICorner", downBtn).CornerRadius = UDim.new(0, 15)
+    
+    local speedBtn = Instance.new("TextButton", mobileControlFrame)
+    speedBtn.Text = "⚡"
+    speedBtn.Size = UDim2.new(0, 60, 0, 60)
+    speedBtn.Position = UDim2.new(0.85, -30, 0.5, -30)
+    speedBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
+    speedBtn.TextSize = 24
+    Instance.new("UICorner", speedBtn).CornerRadius = UDim.new(0, 15)
+    
+    -- متغيرات التحكم
+    local joystickActive = false
+    local joystickStartPos
+    local joystickVector = Vector2.new(0, 0)
+    local upPressed = false
+    local downPressed = false
+    local speedBoost = false
+    
+    -- أحداث Joystick
+    joystickFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            joystickActive = true
+            joystickStartPos = input.Position
+        end
+    end)
+    
+    joystickFrame.InputChanged:Connect(function(input)
+        if joystickActive and input.UserInputType == Enum.UserInputType.Touch then
+            local currentPos = input.Position
+            local delta = currentPos - joystickStartPos
+            local maxDistance = 40
+            
+            -- حساب اتجاه Joystick
+            local direction = delta
+            if direction.Magnitude > maxDistance then
+                direction = direction.Unit * maxDistance
+            end
+            
+            -- تحديث موقع Joystick
+            joystick.Position = UDim2.new(0.5, direction.X, 0.5, direction.Y)
+            
+            -- حفظ متجه الحركة
+            joystickVector = Vector2.new(direction.X / maxDistance, direction.Y / maxDistance)
+        end
+    end)
+    
+    joystickFrame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            joystickActive = false
+            joystick.Position = UDim2.new(0.5, -20, 0.5, -20)
+            joystickVector = Vector2.new(0, 0)
+        end
+    end)
+    
+    -- أحداث الأزرار
+    upBtn.MouseButton1Down:Connect(function() upPressed = true end)
+    upBtn.MouseButton1Up:Connect(function() upPressed = false end)
+    downBtn.MouseButton1Down:Connect(function() downPressed = true end)
+    downBtn.MouseButton1Up:Connect(function() downPressed = false end)
+    speedBtn.MouseButton1Down:Connect(function() speedBoost = true end)
+    speedBtn.MouseButton1Up:Connect(function() speedBoost = false end)
+    
+    -- جعل الإطار قابل للسحب
+    local dragging = false
+    local dragStart, startPos
+    
+    mobileControlFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch and input.Position.X > mobileControlFrame.AbsolutePosition.X + 100 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mobileControlFrame.Position
+        end
+    end)
+    
+    mobileControlFrame.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - dragStart
+            mobileControlFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    mobileControlFrame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    -- إرجاع عناصر التحكم
+    return {
+        joystickVector = function() return joystickVector end,
+        upPressed = function() return upPressed end,
+        downPressed = function() return downPressed end,
+        speedBoost = function() return speedBoost end,
+        destroy = function()
+            if mobileControlFrame then
+                mobileControlFrame:Destroy()
+                mobileControlFrame = nil
+            end
+        end
+    }
+end
+
+-- 🔵 [5.2] دالة التحكم للجوال
+local function updateMobileControls()
+    if UserInputService.TouchEnabled and mobileControlsEnabled then
+        if not mobileControls then
+            mobileControls = createMobileControls()
+        end
+        return mobileControls
+    else
+        if mobileControls then
+            mobileControls.destroy()
+            mobileControls = nil
+        end
+        return nil
+    end
+end
+
+-- [5] FLIGHT SYSTEM FUNCTIONS (محدثة للجوال)
 local function startFlight()
     if isFlying or not player.Character then return end
     isFlying = true
@@ -215,6 +395,20 @@ local function startFlight()
         if part:IsA("BasePart") then
             part.CanCollide = false
         end
+    end
+    
+    -- 🔵 تشغيل تحكم الجوال إذا كان الجهاز يدعم اللمس
+    if UserInputService.TouchEnabled and mobileControlsEnabled then
+        updateMobileControls()
+        print("📱 Mobile Flight Controls: Enabled")
+    end
+    
+    -- 🔴 Kill Mode حماية
+    if killModeEnabled then
+        if humanoid then
+            humanoid.BreakJointsOnDeath = false
+        end
+        print("🔴 Kill Mode: Enabled - Death protection active")
     end
     
     -- Create flight controls
@@ -241,34 +435,70 @@ local function startFlight()
         
         local moveDirection = Vector3.new(0, 0, 0)
         
-        -- Movement controls
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-            moveDirection = moveDirection + camera.CFrame.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-            moveDirection = moveDirection - camera.CFrame.LookVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-            moveDirection = moveDirection - camera.CFrame.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-            moveDirection = moveDirection + camera.CFrame.RightVector
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-            moveDirection = moveDirection + Vector3.new(0, 1, 0)
-        end
-        if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
-            moveDirection = moveDirection - Vector3.new(0, 1, 0)
-        end
+        -- 🔵 نظام التحكم: جوال أولاً، ثم كيبورد
+        local controls = updateMobileControls()
         
-        -- Apply speed
-        local currentSpeed = flySpeed
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-            currentSpeed = flySpeed * 2
-        end
-        
-        if moveDirection.Magnitude > 0 then
-            moveDirection = moveDirection.Unit * currentSpeed
+        if controls and UserInputService.TouchEnabled then
+            -- تحكم بالجوال
+            local joystickVec = controls.joystickVector()
+            local up = controls.upPressed()
+            local down = controls.downPressed()
+            local boost = controls.speedBoost()
+            
+            -- حركة Joystick
+            if joystickVec.Magnitude > 0.1 then
+                moveDirection = moveDirection + camera.CFrame.LookVector * joystickVec.Y
+                moveDirection = moveDirection + camera.CFrame.RightVector * joystickVec.X
+            end
+            
+            -- تحكم عمودي
+            if up then
+                moveDirection = moveDirection + Vector3.new(0, 1, 0)
+            end
+            if down then
+                moveDirection = moveDirection - Vector3.new(0, 1, 0)
+            end
+            
+            -- زيادة السرعة
+            local currentSpeed = flySpeed
+            if boost then
+                currentSpeed = flySpeed * 2
+            end
+            
+            if moveDirection.Magnitude > 0 then
+                moveDirection = moveDirection.Unit * currentSpeed
+            end
+            
+        else
+            -- تحكم بالكيبورد (للحاسوب)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                moveDirection = moveDirection + camera.CFrame.LookVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                moveDirection = moveDirection - camera.CFrame.LookVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                moveDirection = moveDirection - camera.CFrame.RightVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                moveDirection = moveDirection + camera.CFrame.RightVector
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                moveDirection = moveDirection + Vector3.new(0, 1, 0)
+            end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
+                moveDirection = moveDirection - Vector3.new(0, 1, 0)
+            end
+            
+            -- Apply speed
+            local currentSpeed = flySpeed
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                currentSpeed = flySpeed * 2
+            end
+            
+            if moveDirection.Magnitude > 0 then
+                moveDirection = moveDirection.Unit * currentSpeed
+            end
         end
         
         -- Update velocity
@@ -280,9 +510,29 @@ local function startFlight()
         if bodyGyro then
             bodyGyro.CFrame = CFrame.new(rootPart.Position, rootPart.Position + camera.CFrame.LookVector)
         end
+        
+        -- 🔴 Kill Mode حماية إضافية
+        if killModeEnabled and rootPart then
+            local verticalVelocity = rootPart.Velocity.Y
+            if verticalVelocity < -200 then
+                bodyVelocity.Velocity = Vector3.new(bodyVelocity.Velocity.X, 0, bodyVelocity.Velocity.Z)
+            end
+            
+            -- الحد الأقصى للارتفاع
+            local maxHeight = 1000
+            if rootPart.Position.Y > maxHeight then
+                bodyVelocity.Velocity = Vector3.new(bodyVelocity.Velocity.X, -50, bodyVelocity.Velocity.Z)
+            end
+        end
     end)
     
     print("🚀 FLIGHT SYSTEM: Activated | Speed: " .. flySpeed)
+    if UserInputService.TouchEnabled and mobileControlsEnabled then
+        print("📱 Mobile Controls: Active")
+    end
+    if killModeEnabled then
+        print("🔴 Kill Mode: Active - Death protection enabled")
+    end
     
     -- Show flight UI if enabled
     if flightUIEnabled then
@@ -297,6 +547,12 @@ local function stopFlight()
     if not isFlying then return end
     isFlying = false
     
+    -- 🔵 إزالة تحكم الجوال
+    if mobileControls then
+        mobileControls.destroy()
+        mobileControls = nil
+    end
+    
     if bodyGyro then bodyGyro:Destroy() end
     if bodyVelocity then bodyVelocity:Destroy() end
     
@@ -304,6 +560,9 @@ local function stopFlight()
         local humanoid = player.Character:FindFirstChild("Humanoid")
         if humanoid then 
             humanoid.PlatformStand = false
+            if killModeEnabled then
+                humanoid.BreakJointsOnDeath = true
+            end
         end
         
         -- Restore collision
@@ -329,6 +588,39 @@ local function changeFlightSpeed(amount)
     flySpeed = math.max(1, flySpeed + amount)
     if isFlying then
         print("⚡ FLIGHT SPEED: " .. flySpeed)
+    end
+end
+
+-- 🔴 [6] Kill Mode Functions
+local function toggleKillMode(state)
+    killModeEnabled = state
+    if state then
+        print("🔴 Kill Mode: Enabled - Death protection active")
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.BreakJointsOnDeath = false
+        end
+    else
+        print("🔴 Kill Mode: Disabled")
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid.BreakJointsOnDeath = true
+        end
+    end
+end
+
+-- 🔵 [7] Mobile Controls Functions
+local function toggleMobileControls(state)
+    mobileControlsEnabled = state
+    if state then
+        print("📱 Mobile Controls: Enabled")
+        if isFlying then
+            updateMobileControls()
+        end
+    else
+        print("📱 Mobile Controls: Disabled")
+        if mobileControls then
+            mobileControls.destroy()
+            mobileControls = nil
+        end
     end
 end
 
@@ -375,7 +667,7 @@ local function toggleCoordinates(state)
     end
 end
 
--- [6] FLIGHT UI FUNCTIONS
+-- [8] FLIGHT UI FUNCTIONS
 local flightUIEnabled = false
 
 local function showFlightUI()
@@ -761,6 +1053,7 @@ function CreateMainGui()
 ━━━━━━━━━━━━━━━━
 ⚡ GHOST FARM FIX
 🚀 FLIGHT SYSTEM
+📱 MOBILE CONTROLS
 ⚒️ 3zf & RXT
 🔐 Key: RXT24
 ]]
@@ -1053,7 +1346,7 @@ function CreateMainGui()
         infJumpEnabled = s
     end)
     
-    -- Speed Input (FIXED)
+    -- Speed Input
     local speedInput = Instance.new("TextBox", P1)
     speedInput.Name = "SpeedInput"
     speedInput.Size = UDim2.new(1, 0, 0, 35)
@@ -1065,17 +1358,16 @@ function CreateMainGui()
     speedInput.Text = "50"
     Instance.new("UICorner", speedInput)
     
-    -- Speed Toggle (FIXED)
+    -- Speed Toggle
     AddToggle(P1, "🚀 Stealth Speed", stealthSpeedEnabled, function(s)
         stealthSpeedEnabled = s
         if s then
-            -- Update speed value from input
             speedValue = tonumber(speedInput.Text) or 50
             print("✅ Stealth Speed: ON | Speed: " .. speedValue)
         else
             print("❌ Stealth Speed: OFF")
         end
-        UpdateSpeed() -- Update the speed connection
+        UpdateSpeed()
     end)
     
     -- Update speed when input changes
@@ -1093,7 +1385,6 @@ function CreateMainGui()
             end
             print("📊 Speed updated to: " .. speedValue)
             
-            -- Update speed if stealth speed is enabled
             if stealthSpeedEnabled then
                 UpdateSpeed()
             end
@@ -1151,6 +1442,16 @@ SHIFT - Speed Boost
         end
     end)
     
+    -- 🔵 Mobile Controls
+    AddToggle(P3, "📱 Mobile Controls", mobileControlsEnabled, function(s)
+        toggleMobileControls(s)
+    end)
+    
+    -- 🔴 Kill Mode للحماية من الموت
+    AddToggle(P3, "🔴 Kill Mode (Anti-Death)", killModeEnabled, function(s)
+        toggleKillMode(s)
+    end)
+    
     AddToggle(P3, "⚡ FPS BOOST", false, function(s)
         if s then
             for _, v in pairs(game:GetDescendants()) do
@@ -1194,12 +1495,17 @@ SHIFT - Speed Boost
     flightControlsInfo.Text = [[
 🎮 FLIGHT CONTROLS:
 • Turn ON Flight System
-• Adjust speed in Flight UI
+• For Mobile: Enable Mobile Controls
 • Space: Up | Q: Down
 • Shift: Speed Boost
 • W/A/S/D: Movement
+
+📱 MOBILE CONTROLS:
+• Joystick for movement
+• Arrow buttons for up/down
+• Lightning for speed boost
 ]]
-    flightControlsInfo.Size = UDim2.new(1, 0, 0, 80)
+    flightControlsInfo.Size = UDim2.new(1, 0, 0, 120)
     flightControlsInfo.BackgroundTransparency = 1
     flightControlsInfo.TextColor3 = Color3.fromRGB(180, 180, 180)
     flightControlsInfo.Font = Enum.Font.Gotham
@@ -1256,7 +1562,7 @@ SHIFT - Speed Boost
     
     -- [[ ⚒️ Developer Tab ]] --
     local DevLabel = Instance.new("TextLabel", P5)
-    DevLabel.Size = UDim2.new(1, 0, 0, 200)
+    DevLabel.Size = UDim2.new(1, 0, 0, 250)
     DevLabel.BackgroundTransparency = 1
     DevLabel.Text = [[
 ⚒️ Developer Tools
@@ -1276,7 +1582,7 @@ Safe Ghost Farm
 • Toggle On/Off
 • Timer Display
 
-⚡ Speed System (FIXED):
+⚡ Speed System:
 • Real-time updates
 • Range: 16-500
 • Smooth transition
@@ -1284,9 +1590,21 @@ Safe Ghost Farm
 
 🚀 FLIGHT SYSTEM:
 • Turn ON in WORLD tab
-• Adjust speed in Flight UI
-• Quick presets: 500/1000/5000
+• Mobile Controls for touch devices
+• Kill Mode for death protection
 • Height coordinates display
+
+📱 MOBILE FEATURES:
+• Touch joystick for movement
+• Arrow buttons for altitude
+• Speed boost button
+• Draggable control panel
+
+🔴 KILL MODE:
+• Prevents death in kill zones
+• Protects from falling damage
+• Auto-return to safe areas
+• Health protection
 ]]
     DevLabel.TextColor3 = Color3.fromRGB(150, 100, 255)
     DevLabel.Font = Enum.Font.GothamBold
@@ -1295,7 +1613,7 @@ Safe Ghost Farm
     
     local ReloadBtn = Instance.new("TextButton", P5)
     ReloadBtn.Size = UDim2.new(1, 0, 0, 40)
-    ReloadBtn.Position = UDim2.new(0, 0, 0, 210)
+    ReloadBtn.Position = UDim2.new(0, 0, 0, 260)
     ReloadBtn.Text = "🔄 Reload Script"
     ReloadBtn.BackgroundColor3 = Color3.fromRGB(35, 30, 60)
     ReloadBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -1307,6 +1625,9 @@ Safe Ghost Farm
         if flightUIFrame then
             flightUIFrame:Destroy()
         end
+        if mobileControls then
+            mobileControls.destroy()
+        end
         task.wait(0.5)
         CreateKeyGui()
     end)
@@ -1316,15 +1637,16 @@ Safe Ghost Farm
     Footer.Size = UDim2.new(1, 0, 0, 30)
     Footer.Position = UDim2.new(0, 0, 1, -30)
     Footer.BackgroundTransparency = 1
-    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | FLIGHT SYSTEM IN WORLD TAB"
+    Footer.Text = "RXT SERVER V10 | 24H KEY SYSTEM | FLIGHT + MOBILE CONTROLS IN WORLD TAB"
     Footer.TextColor3 = Color3.fromRGB(150, 100, 255)
     Footer.Font = Enum.Font.GothamBold
     Footer.TextSize = 11
     
     print("👑 RXT MASTER V10 LOADED - WITH FLIGHT SYSTEM")
     print("🚀 Flight System: Moved to WORLD tab")
-    print("✅ Speed Control Buttons: Removed from WORLD tab")
-    print("📍 Coordinates: Turn ON in MAIN tab")
+    print("📱 Mobile Controls: Added for touch devices")
+    print("🔴 Kill Mode: Added for death protection")
+    print("✅ Ready for both PC and Mobile!")
 end
 
 -- Start with Key GUI
