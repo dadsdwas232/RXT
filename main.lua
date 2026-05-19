@@ -1,267 +1,230 @@
---====================================================================--
---                      حقوق السكربت: K V N                           --
---====================================================================--
+--[[
+    =========================================
+    [+] Script Name: K V N Premium Hub
+    [+] Supported: Exploits / Executors
+    [+] Creator: K V N
+    =========================================
+--]]
 
--- [[ الخدمات الأساسية واستدعاء بيئة المشغل الخارجي ]]
 local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
 
--- تأمين توافق دالة محاكاة الماوس للمشغلات الخارجية المختلفة
-local mousemoverel = mousemoverel or (syn and syn.mousemoverel) or (Input and Input.MouseMove)
-
--- [[ إعدادات السكربت الافتراضية ]]
+-- تفعيل الميزات واختياراتها
 local Settings = {
     AimbotEnabled = false,
-    AimTarget = "Head", -- الخيارات: "Head", "Random", "Stomach"
-    MaxDistance = 30, -- المسافة القصوى (30 متر / ستد)
+    AimPart = "Head", -- الخيارات: "Head", "Abdomen", "Random"
+    MaxDistance = 30, -- المسافة المحددة (30 متر)
     EspEnabled = false,
     InventoryEspEnabled = false,
-    FriendsList = {} -- قائمة الأصدقاء المستثنيين من الآيم بوت
+    Friends = {} -- قائمة الأصدقاء (يتم إدخال أسماء اللاعبين هنا)
 }
 
---====================================================================--
--- [1] تصميم واجهة المستخدم (GUI) المخصصة للمشغلات الخارجية
---====================================================================--
+------------------------------------------------------------------------
+-- [1] بناء واجهة المستخدم (GUI) بحقوق K V N
+------------------------------------------------------------------------
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "KVN_External_Menu"
-ScreenGui.ResetOnSpawn = false
+ScreenGui.Name = "KVN_Hub"
+ScreenGui.Parent = CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- حماية الـ GUI من الفحص التلقائي لأنظمة الحماية (Anti-Cheat Bypass)
-if getgenv and getgenv().protect_gui then
-    getgenv().protect_gui(ScreenGui)
-elseif syn and syn.protect_gui then
-    syn.protect_gui(ScreenGui)
-end
-ScreenGui.Parent = game:CoreGui
-
--- الزر الخارجي العائم لإعادة فتح القائمة بعد إغلاقها
-local OpenButton = Instance.new("TextButton")
-OpenButton.Name = "OpenButton"
-OpenButton.Size = UDim2.new(0, 90, 0, 35)
-OpenButton.Position = UDim2.new(0, 15, 0, 15)
-OpenButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-OpenButton.TextColor3 = Color3.fromRGB(0, 255, 150)
-OpenButton.Text = "⚡ KVN OPEN"
-OpenButton.Font = Enum.Font.SourceSansBold
-OpenButton.TextSize = 14
-OpenButton.Visible = false
-OpenButton.Parent = ScreenGui
-
-local obCorner = Instance.new("UICorner")
-obCorner.CornerRadius = UDim.new(0, 6)
-obCorner.Parent = OpenButton
-
--- القائمة الرئيسية
+-- اللوحة الرئيسية (Main Frame)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 380, 0, 440)
-MainFrame.Position = UDim2.new(0.35, 0, 0.25, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+MainFrame.Size = UDim2.new(0, 320, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
-MainFrame.Draggable = true -- تفعيل السحب والتنقل الحر عبر الشاشة للمشغل
+MainFrame.Draggable = true -- ميزة السحب بحرية
 MainFrame.Parent = ScreenGui
 
-local Corner = Instance.new("UICorner")
-Corner.CornerRadius = UDim.new(0, 10)
-Corner.Parent = MainFrame
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
 
--- ترويسة القائمة والحقوق
+-- العنوان والحقوق
 local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Size = UDim2.new(1, -50, 0, 45)
-Title.Position = UDim2.new(0, 15, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "K V N  |  EXTERNAL EXECUTOR"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Text = "K V N  |  PREMIUM HUB"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
-Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
 Title.Parent = MainFrame
 
--- زر الإغلاق الذكي (X)
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -40, 0, 7)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "✕"
-CloseButton.TextColor3 = Color3.fromRGB(250, 60, 60)
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.TextSize = 18
-CloseButton.Parent = MainFrame
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = Title
 
-CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    OpenButton.Visible = true
-end)
-
-OpenButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    OpenButton.Visible = false
-end)
-
--- حاوية الخيارات التمريرية
+-- حاوية الأزرار لتنظيمها بشكل تلقائي
 local Container = Instance.new("ScrollingFrame")
-Container.Name = "Container"
-Container.Size = UDim2.new(1, -20, 1, -65)
-Container.Position = UDim2.new(0, 10, 0, 55)
+Container.Size = UDim2.new(1, -20, 1, -60)
+Container.Position = UDim2.new(0, 10, 0, 50)
 Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 0, 500)
-Container.ScrollBarThickness = 3
-Container.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+Container.ScrollBarThickness = 4
 Container.Parent = MainFrame
 
-local UIList = Instance.new("UIListLayout")
-UIList.Padding = UDim.new(0, 10)
-UIList.Parent = Container
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.Parent = Container
 
--- دالة ديناميكية لإنشاء أزرار التشغيل والإيقاف (Toggles)
-local function createToggle(name, text, callback)
-    local btn = Instance.new("TextButton")
-    btn.Name = name
-    btn.Size = UDim2.new(1, 0, 0, 42)
-    btn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.Text = text .. " : [ DISABLED ]"
-    btn.Font = Enum.Font.SourceSansSemibold
-    btn.TextSize = 15
+-- دالة مساعدة لإنشاء الأزرار بسلاسة
+local function CreateToggleButton(name, text, default, callback)
+    local Button = Instance.new("TextButton")
+    Button.Name = name
+    Button.Size = UDim2.new(1, 0, 0, 40)
+    Button.Font = Enum.Font.GothamSemibold
+    Button.TextSize = 14
+    Button.BorderSizePixel = 0
     
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 6)
-    c.Parent = btn
-    
-    local enabled = false
-    btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        if enabled then
-            btn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.Text = text .. " : [ ENABLED ]"
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = Button
+
+    local state = default
+    local function update()
+        if state then
+            Button.BackgroundColor3 = Color3.fromRGB(46, 204, 113) -- أخضر تفعيل
+            Button.Text = text .. " [ON]"
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
         else
-            btn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            btn.Text = text .. " : [ DISABLED ]"
+            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- رمادي تعطيل
+            Button.Text = text .. " [OFF]"
+            Button.TextColor3 = Color3.fromRGB(200, 200, 200)
         end
-        callback(enabled)
+    end
+    
+    Button.MouseButton1Click:Connect(function()
+        state = not state
+        update()
+        callback(state)
     end)
-    btn.Parent = Container
-    return btn
+    
+    update()
+    Button.Parent = Container
+    return Button
 end
 
--- [ إضافة أزرار التحكم الفورية للواجهة ]
+------------------------------------------------------------------------
+-- [2] إضافة الأزرار والتحكم بالقائمة الفرعية للأيم بوت
+------------------------------------------------------------------------
 
-createToggle("ToggleAimbot", "Aimbot Mechanism", function(state)
-    Settings.AimbotEnabled = state
+-- تفعيل/تعطيل الأيم بوت
+CreateToggleButton("ToggleAimbot", "Aimbot", Settings.AimbotEnabled, function(val)
+    Settings.AimbotEnabled = val
 end)
 
--- زر التبديل الدوار لتحديد مكان شبك الآيم بوت (Body / Head / Stomach)
-local TargetDropdown = Instance.new("TextButton")
-TargetDropdown.Name = "TargetDropdown"
-TargetDropdown.Size = UDim2.new(1, 0, 0, 42)
-TargetDropdown.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-TargetDropdown.TextColor3 = Color3.fromRGB(255, 185, 0)
-TargetDropdown.Text = "🎯 Target Area: Head (Click to Change)"
-TargetDropdown.Font = Enum.Font.SourceSansBold
-TargetDropdown.TextSize = 15
-local tdCorner = Instance.new("UICorner")
-tdCorner.CornerRadius = UDim.new(0, 6)
-tdCorner.Parent = TargetDropdown
-TargetDropdown.Parent = Container
+-- أزرار تحديد مكان شبك الأيم بوت (Dropdown محاكي)
+local TargetPanel = Instance.new("Frame")
+TargetPanel.Size = UDim2.new(1, 0, 0, 35)
+TargetPanel.BackgroundTransparency = 1
+TargetPanel.Parent = Container
 
-local modes = {"Head", "Stomach", "Random"}
-local currentModeIndex = 1
+local UIListHorizontal = Instance.new("UIListLayout")
+UIListHorizontal.FillDirection = Enum.FillDirection.Horizontal
+UIListHorizontal.Padding = UDim.new(0, 5)
+UIListHorizontal.Parent = TargetPanel
 
-TargetDropdown.MouseButton1Click:Connect(function()
-    currentModeIndex = currentModeIndex + 1
-    if currentModeIndex > #modes then currentModeIndex = 1 end
-    Settings.AimTarget = modes[currentModeIndex]
-    TargetDropdown.Text = "🎯 Target Area: " .. Settings.AimTarget
+local function CreatePartButton(partName, displayName)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(0.31, 0, 1, 0)
+    Btn.BackgroundColor3 = Settings.AimPart == partName and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(40, 40, 40)
+    Btn.Text = displayName
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.Gotham
+    Btn.TextSize = 12
+    
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 4)
+    c.Parent = Btn
+    
+    Btn.MouseButton1Click:Connect(function()
+        Settings.AimPart = partName
+        for _, v in pairs(TargetPanel:GetChildren()) do
+            if v:IsA("TextButton") then
+                v.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            end
+        end
+        Btn.BackgroundColor3 = Color3.fromRGB(52, 152, 219) -- أزرق عند الاختيار
+    end)
+    Btn.Parent = TargetPanel
+end
+
+CreatePartButton("Head", "الرأس")
+CreatePartButton("Abdomen", "البطن")
+CreatePartButton("Random", "عشوائي")
+
+-- تفعيل/تعطيل الـ ESP والجدران
+CreateToggleButton("ToggleESP", "Wall ESP", Settings.EspEnabled, function(val)
+    Settings.EspEnabled = val
 end)
 
-createToggle("ToggleESP", "Wall Player ESP", function(state)
-    Settings.EspEnabled = state
+-- تفعيل/تعطيل كشف الـ Inventory مع الألوان والأسماء الأصلية
+CreateToggleButton("ToggleInvESP", "Show Inventory Items", Settings.InventoryEspEnabled, function(val)
+    Settings.InventoryEspEnabled = val
 end)
 
-createToggle("ToggleInvESP", "Inventory / Tools ESP", function(state)
-    Settings.InventoryEspEnabled = state
-end)
-
--- حقل إدخال أسماء الأصدقاء لحمايتهم من استهداف السكربت
+-- إدخال وإدارة قائمة الأصدقاء (Friend List GUI)
 local FriendInput = Instance.new("TextBox")
-FriendInput.Name = "FriendInput"
-FriendInput.Size = UDim2.new(1, 0, 0, 42)
-FriendInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-FriendInput.TextColor3 = Color3.fromRGB(0, 255, 150)
-FriendInput.PlaceholderText = "➕ Type Username to Whitelist..."
+FriendInput.Size = UDim2.new(1, 0, 0, 35)
+FriendInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+FriendInput.PlaceholderText = "اكتب اسم اللاعب لإضافته للأصدقاء..."
 FriendInput.Text = ""
-FriendInput.Font = Enum.Font.SourceSans
-FriendInput.TextSize = 15
-local fiCorner = Instance.new("UICorner")
-fiCorner.CornerRadius = UDim.new(0, 6)
-fiCorner.Parent = FriendInput
+FriendInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+FriendInput.Font = Enum.Font.Gotham
+FriendInput.TextSize = 12
+local fC = Instance.new("UICorner") fC.CornerRadius = UDim.new(0, 4) fC.Parent = FriendInput
 FriendInput.Parent = Container
 
 FriendInput.FocusLost:Connect(function(enterPressed)
     if enterPressed and FriendInput.Text ~= "" then
         local targetName = FriendInput.Text
-        Settings.FriendsList[targetName] = true
-        FriendInput.Text = "✓ Secured: " .. targetName
-        task.wait(1.5)
+        Settings.Friends[targetName] = true
+        FriendInput.Text = "تمت إضافة: " .. targetName
+        task.wait(1)
         FriendInput.Text = ""
     end
 end)
 
-
---====================================================================--
--- [2] منطق البرمجة المتقدم (الآيم بوت الخارجي والمحدد بـ 30 متر)
---====================================================================--
-
--- دالة للحصول على جزء عشوائي تماماً من جسم العدو لتفادي كشف السكربت كآلي
-local function getRandomBodyPart(character)
-    local parts = {}
-    for _, part in pairs(character:GetChildren()) do
-        if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-            table.insert(parts, part)
-        end
+-- ميزة إخفاء وإظهار الواجهة عبر زر LeftControl
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.LeftControl then
+        MainFrame.Visible = not MainFrame.Visible
     end
-    if #parts > 0 then
-        return parts[math.random(1, #parts)]
-    end
-    return character:FindFirstChild("Head")
-end
+end)
 
--- البحث عن الهدف الأقرب والمطابق للمسافة (30 متر كحد أقصى)
-local function getClosestTarget()
+
+------------------------------------------------------------------------
+-- [3] المنطق البرمجي: الأيم بوت (Aimbot) بمسافة 30 متر وضد الأصدقاء
+------------------------------------------------------------------------
+
+local function GetClosestPlayer()
     local closestPlayer = nil
     local shortestDistance = math.huge
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            -- تخطي اللاعب إذا كان مسجلاً في القائمة البيضاء (الفريند لِست)
-            if not Settings.FriendsList[player.Name] then
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") and player.Character.Humanoid.Health > 0 then
+            
+            -- التحقق من قائمة الأصدقاء (تخطي إذا كان صديقاً)
+            if Settings.Friends[player.Name] then continue end
+
+            -- حساب المسافة الحقيقية بالمتر (Studs / 3.57 تعادل المتر تقريباً، وهنا وضعنا 100 ستاود لتساوي 30 متر بدقة)
+            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if distance <= 100 then -- 100 Studs = حوالي 28-30 متر داخل روبلوكس
                 
-                local rootPart = player.Character.HumanoidRootPart
-                -- حساب مسافة البعد الحقيقية بالمتر (Magnitude)
-                local distance = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")) 
-                    and (LocalPlayer.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude or math.huge
-                
-                -- التحقق الصارم من شرط المسافة (30 متر كحد أقصى)
-                if distance <= Settings.MaxDistance then
-                    -- إسقاط الإحداثيات على الشاشة لضمان توجيه الكاميرا بدقة للمشغلات الخارجية
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
-                    if onScreen then
-                        local mousePos = UserInputService:GetMouseLocation()
-                        local mouseDistance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                        
-                        if mouseDistance < shortestDistance then
-                            shortestDistance = mouseDistance
-                            closestPlayer = player
-                        end
+                -- حساب المسافة على الشاشة بالنسبة للماوس
+                local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+                if onScreen then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local mouseDistance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                    
+                    if mouseDistance < shortestDistance then
+                        closestPlayer = player
+                        shortestDistance = mouseDistance
                     end
                 end
             end
@@ -270,159 +233,130 @@ local function getClosestTarget()
     return closestPlayer
 end
 
--- تشغيل ميزة تعقب الهدف عند ضغط الزر الأيمن للفأرة (Hold Right Click)
+-- تشغيل الأيم بوت عند الضغط المطول على الماوس الأيمن
+local Aiming = false
 UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        _G.Aiming = true
+        Aiming = true
     end
 end)
-
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        _G.Aiming = false
+        Aiming = false
     end
 end)
 
--- حلقة التحديث المستمر المتوافقة مع الـ Render المخصص للمشغلات
 RunService.RenderStepped:Connect(function()
-    if Settings.AimbotEnabled and _G.Aiming then
-        local target = getClosestTarget()
+    if Settings.AimbotEnabled and Aiming then
+        local target = GetClosestPlayer()
         if target and target.Character then
-            local aimPart = nil
+            local aimPartName = Settings.AimPart
             
-            -- تحديد نقطة الشبك والضرب المحددة من القائمة
-            if Settings.AimTarget == "Head" then
-                aimPart = target.Character:FindFirstChild("Head")
-            elseif Settings.AimTarget == "Stomach" then
-                aimPart = target.Character:FindFirstChild("UpperTorso") or target.Character:FindFirstChild("Torso")
-            elseif Settings.AimTarget == "Random" then
-                aimPart = getRandomBodyPart(target.Character)
+            -- ميزة العشوائي للجسم بالكامل
+            if aimPartName == "Random" then
+                local parts = {"Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm"}
+                aimPartName = parts[math.random(1, #parts)]
+            elseif aimPartName == "Abdomen" then
+                aimPartName = target.Character:FindFirstChild("LowerTorso") and "LowerTorso" or "Torso"
             end
             
-            if aimPart then
-                -- توجيه الكاميرا للمشغلات (يمزج بين CFrame ومحاكاة الماوس لضمان الثبات)
-                if mousemoverel then
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
-                    if onScreen then
-                        local mousePos = UserInputService:GetMouseLocation()
-                        mousemoverel((screenPos.X - mousePos.X) * 0.4, (screenPos.Y - mousePos.Y) * 0.4)
-                    end
-                else
-                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, aimPart.Position)
-                end
+            local targetPart = target.Character:FindFirstChild(aimPartName)
+            if targetPart then
+                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPart.Position)
             end
         end
     end
 end)
 
 
---====================================================================--
--- [3] الـ ESP المتطور ومستكشف عتاد اللاعبين (Inventory ESP) عبر الجدران
---====================================================================--
+------------------------------------------------------------------------
+-- [4] المنطق البرمجي: الرادار والـ ESP والـ Inventory لكل الناس
+------------------------------------------------------------------------
 
-local function createEspTags(player)
-    -- إزالة الـ ESP القديم إن وجد لمنع التراكم والـ Lag
-    if player.Character and player.Character:FindFirstChild("KVN_ESP_Billboard") then
-        player.Character.KVN_ESP_Billboard:Destroy()
-    end
-    
-    local character = player.Character or player.CharacterAdded:Wait()
-    local head = character:WaitForChild("Head", 5)
-    if not head then return end
-    
-    -- بناء اللوحة الشفافة فوق رأس اللاعب مع ميزة الاختراق الفوري للجدران (AlwaysOnTop)
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "KVN_ESP_Billboard"
-    billboard.AlwaysOnTop = true
-    billboard.Size = UDim2.new(0, 200, 0, 100)
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    billboard.Parent = character
-    
-    local layout = Instance.new("UIListLayout")
-    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    layout.VerticalAlignment = Enum.VerticalAlignment.Center
-    layout.Parent = billboard
+local function CreateEsp(player)
+    local Highlight = Instance.new("Highlight")
+    Highlight.Name = "KVN_ESP"
+    Highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    Highlight.FillTransparency = 0.5
+    Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    Highlight.OutlineTransparency = 0
+    Highlight.Adornee = player.Character
+    Highlight.Parent = CoreGui
 
-    -- نص يطابق اسم ولون فريق اللاعب بشكل متناسق (TeamColor Match)
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Size = UDim2.new(1, 0, 0, 20)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.Text = player.Name
-    nameLabel.TextColor3 = player.TeamColor and player.TeamColor.Color or Color3.fromRGB(255, 50, 50)
-    nameLabel.Font = Enum.Font.SourceSansBold
-    nameLabel.TextSize = 15
-    nameLabel.Visible = false
-    nameLabel.Parent = billboard
+    -- واجهة فوق رأس اللاعب لعرض الـ Inventory والأسماء
+    local Billboard = Instance.new("BillboardGui")
+    Billboard.Name = "KVN_Billboard"
+    Billboard.Size = UDim2.new(0, 200, 0, 50)
+    Billboard.AlwaysOnTop = true
+    Billboard.ExtentsOffset = Vector3.new(0, 3, 0)
+    Billboard.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
+    Billboard.Parent = CoreGui
 
-    -- نص مستكشف الأدوات والـ Inventory الفريد للنسخ
-    local invLabel = Instance.new("TextLabel")
-    invLabel.Name = "InvLabel"
-    invLabel.Size = UDim2.new(1, 0, 0, 20)
-    invLabel.BackgroundTransparency = 1
-    invLabel.Text = ""
-    invLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    invLabel.Font = Enum.Font.SourceSansBold
-    invLabel.TextSize = 13
-    invLabel.Visible = false
-    invLabel.Parent = billboard
-    
-    -- ربط نظام الكشف بنبضات المعالج (Heartbeat) للتحديث السريع للأدوات الممسوكة والـ Backpack
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.Font = Enum.Font.GothamBold
+    TextLabel.TextSize = 12
+    TextLabel.TextStrokeTransparency = 0
+    TextLabel.Parent = Billboard
+
+    -- تحديث الـ ESP والأدوات بشكل مستمر
     local connection
-    connection = RunService.Heartbeat:Connect(function()
-        if not character or not character:Parent() then
+    connection = RunService.RenderStepped:Connect(function()
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+            Highlight:Destroy()
+            Billboard:Destroy()
             connection:Disconnect()
             return
         end
-        
-        -- إظهار أو إخفاء الـ ESP بناءً على حالة الزر في القائمة
-        nameLabel.Visible = Settings.EspEnabled
+
+        -- التحكم بالرؤية عبر الأزرار
+        Highlight.Enabled = Settings.EspEnabled
+        Billboard.Enabled = Settings.EspEnabled
         
         if Settings.InventoryEspEnabled then
-            invLabel.Visible = true
-            local toolName = "None"
-            local toolColor = Color3.fromRGB(160, 160, 160) -- لون رمادي افتراضي إذا كان فارغاً
+            local holding = "Nothing"
+            local tool = player.Character:FindFirstChildOfClass("Tool")
             
-            -- 1. فحص إذا كان يمسك السلاح أو الأداة بيده حالياً
-            local holding = character:FindFirstChildOfClass("Tool")
-            if holding then
-                toolName = holding.Name
-                toolColor = Color3.fromRGB(0, 255, 120) -- لون أخضر فاقع للتنبيه بالأداة النشطة
+            -- إذا كان يمسك الأداة في يده، يتم جلب الاسم واللون الأصلي لها
+            if tool then
+                holding = tool.Name
+                -- محاكاة ألوان متناسقة للأدوات لتظهر بنظام "نسخ ولصق" رائع
+                TextLabel.Text = player.Name .. "\n[Holding: " .. holding .. "]"
+                TextLabel.TextColor3 = Color3.fromRGB(241, 196, 15) -- لون ذهبي مميز للأدوات الحاملة
             else
-                -- 2. إذا لم يكن بيده شيء، يتم فحص أول أداة بداخل الـ Backpack الخاص به فوراً
-                local backpack = player:FindFirstChild("Backpack")
-                if backpack then
-                    local firstTool = backpack:FindFirstChildOfClass("Tool")
-                    if firstTool then
-                        toolName = firstTool.Name
-                        toolColor = Color3.fromRGB(230, 230, 230) -- لون أبيض للأدوات المخزنة
-                    end
+                -- فحص الحقيبة الخلفية إذا لم يكن يحملها بيده
+                local bTool = player:FindFirstChild("Backpack") and player.Backpack:FindFirstChildOfClass("Tool")
+                if bTool then
+                    holding = bTool.Name
                 end
+                TextLabel.Text = player.Name .. "\n[Inv: " .. holding .. "]"
+                TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
             end
-            
-            -- طباعة الاسم المطابق للأداة بالكامل مع المحافظة على التلوين المحدد
-            invLabel.Text = "[ " .. toolName .. " ]"
-            invLabel.TextColor3 = toolColor
         else
-            invLabel.Visible = false
+            TextLabel.Text = player.Name
+            TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
     end)
 end
 
--- تفعيل وتثبيت نظام الكشف الفوري لجميع اللاعبين بالسيرفر
+-- تفعيل الـ ESP تلقائياً لكل من يدخل السيرفر
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        task.wait(1)
+        CreateEsp(player)
+    end)
+end)
+
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
-        if player.Character then createEspTags(player) end
+        if player.Character then
+            CreateEsp(player)
+        end
         player.CharacterAdded:Connect(function()
-            task.wait(0.5)
-            createEspTags(player)
+            task.wait(1)
+            CreateEsp(player)
         end)
     end
 end
-
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        task.wait(0.5)
-        createEspTags(player)
-    end)
-end)
