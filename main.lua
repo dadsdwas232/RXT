@@ -1,13 +1,12 @@
--- [[ المكتبات والخدمات الأساسية ]] --
+-- [[ الخدمات الأساسية ]] --
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
-local Workspace = game:GetService("Workspace")
 
--- [[ إعدادات التخطي المتقدمة ]] --
-local STEP_DISTANCE = 18 -- زيادة المسافة لتجاوز سماكة الأبواب والجدران المغلقة
-local TWEEN_TIME = 0.05  -- سرعة خاطفة جداً لخدع حماية الأنتي شيت والسيرفر
+-- [[ إعدادات التحرك ]] --
+local STEP_DISTANCE = 18 -- المسافة لتجاوز الأبواب والجدران
+local TWEEN_TIME = 0.05 -- سرعة خاطفة لتجنب الأنتي شيت
 
 -- [[ إنشاء الواجهة الرسومية UI ]] --
 local ScreenGui = Instance.new("ScreenGui")
@@ -15,37 +14,38 @@ local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
 local ForwardBtn = Instance.new("TextButton")
 local BackwardBtn = Instance.new("TextButton")
-local BypassObjectsBtn = Instance.new("TextButton")
+local BlockPassesBtn = Instance.new("TextButton") -- الزر الجديد لحظر واجهات الجيم باس
 
-ScreenGui.Name = "AdvancedBypassMenu"
+-- ربط الواجهة بالـ CoreGui لمقاومة الـ Reset
+ScreenGui.Name = "FinalBypassMenu"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- اللوحة الرئيسية
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
-MainFrame.Size = UDim2.new(0, 220, 0, 200)
+MainFrame.Size = UDim2.new(0, 220, 0, 200) -- مساحة كافية للزر الجديد
 MainFrame.Active = true
-MainFrame.Draggable = true -- سحب القائمة في أي مكان بالماوس
+MainFrame.Draggable = true -- سحب القائمة في أي مكان
 
 -- العنوان
 Title.Name = "Title"
 Title.Parent = MainFrame
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 Title.BorderSizePixel = 0
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.Font = Enum.Font.SourceSansBold
-Title.Text = "Advanced Bypass V2"
+Title.Text = "Final Bypass V3"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 16
 
--- زر قدام
+-- زر قدام (اختراق)
 ForwardBtn.Name = "ForwardBtn"
 ForwardBtn.Parent = MainFrame
-ForwardBtn.BackgroundColor3 = Color3.fromRGB(46, 139, 87)
+ForwardBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
 ForwardBtn.Position = UDim2.new(0.05, 0, 0.25, 0)
 ForwardBtn.Size = UDim2.new(0.9, 0, 0, 35)
 ForwardBtn.Font = Enum.Font.SourceSansBold
@@ -53,10 +53,10 @@ ForwardBtn.Text = "قدام (اختراق خاطف)"
 ForwardBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ForwardBtn.TextSize = 15
 
--- زر ورا
+-- زر ورا (اختراق)
 BackwardBtn.Name = "BackwardBtn"
 BackwardBtn.Parent = MainFrame
-BackwardBtn.BackgroundColor3 = Color3.fromRGB(178, 34, 34)
+BackwardBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
 BackwardBtn.Position = UDim2.new(0.05, 0, 0.48, 0)
 BackwardBtn.Size = UDim2.new(0.9, 0, 0, 35)
 BackwardBtn.Font = Enum.Font.SourceSansBold
@@ -64,20 +64,20 @@ BackwardBtn.Text = "ورا (اختراق خاطف)"
 BackwardBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 BackwardBtn.TextSize = 15
 
--- زر تخطي قيود الأغراض والأبواب
-BypassObjectsBtn.Name = "BypassObjectsBtn"
-BypassObjectsBtn.Parent = MainFrame
-BypassObjectsBtn.BackgroundColor3 = Color3.fromRGB(30, 144, 255)
-BypassObjectsBtn.Position = UDim2.new(0.05, 0, 0.72, 0)
-BypassObjectsBtn.Size = UDim2.new(0.9, 0, 0, 40)
-BypassObjectsBtn.Font = Enum.Font.SourceSansBold
-BypassObjectsBtn.Text = "تخطي حماية الأغراض والأزرار"
-BypassObjectsBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-BypassObjectsBtn.TextSize = 13
+-- زر حظر واجهات الجيم باس نهائياً
+BlockPassesBtn.Name = "BlockPassesBtn"
+BlockPassesBtn.Parent = MainFrame
+BlockPassesBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+BlockPassesBtn.Position = UDim2.new(0.05, 0, 0.72, 0) -- مكان مناسب في الأسفل
+BlockPassesBtn.Size = UDim2.new(0.9, 0, 0, 40)
+BlockPassesBtn.Font = Enum.Font.SourceSansBold
+BlockPassesBtn.Text = "إزالة واجهات الشراء نهائياً"
+BlockPassesBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+BlockPassesBtn.TextSize = 13
 
 -- [[ الوظائف البرمجية ]] --
 
--- دالة التلبرت الخاطف والسلس (ينقلك قبل استيعاب الأنتي شيت للـ NoClip)
+-- دالة التلبرت الخاطف والسلس
 local function phaseThroughWall(direction)
     local character = LocalPlayer.Character
     local hrp = character and character:FindFirstChild("HumanoidRootPart")
@@ -90,7 +90,6 @@ local function phaseThroughWall(direction)
             targetCFrame = hrp.CFrame * CFrame.new(0, 0, STEP_DISTANCE)
         end
         
-        -- التعديل هنا: سرعة قصيرة جداً ومستقيمة (Linear) لمنع الارتداد الخلفي (Rubberbanding)
         local tweenInfo = TweenInfo.new(TWEEN_TIME, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
         local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
         
@@ -98,43 +97,39 @@ local function phaseThroughWall(direction)
     end
 end
 
--- دالة تعديل الأغراض والأزرار في الماب لتخطي الحماية المحلية
-local function bypassMapObjects()
-    -- 1. إزالة اللوحات الإعلانية المزعجة من الشاشة
+-- دالة حظر وإزالة واجهات الجيم باس نهائياً
+local passesBlocked = false
+local function blockGamepasses()
+    if passesBlocked then return end -- تفعيل مرة واحدة فقط
+    passesBlocked = true
+    
     local pGui = LocalPlayer:FindFirstChild("PlayerGui")
     if pGui then
+        -- 1. إزالة الواجهات الموجودة حالياً
         for _, gui in ipairs(pGui:GetDescendants()) do
-            if gui:IsA("Frame") or gui:IsA("ImageLabel") or gui:IsA("TextLabel") then
+            if gui:IsA("Frame") or gui:IsA("ImageLabel") or gui:IsA("TextLabel") or gui:IsA("ScrollingFrame") then
                 local name = gui.Name:lower()
-                if name:find("shop") or name:find("buy") or name:find("pass") or name:find("purchase") or name:find("premium") then
-                    gui.Visible = false
+                -- البحث عن كلمات مفتاحية متعلقة بالشراء
+                if name:find("shop") or name:find("buy") or name:find("pass") or name:find("purchase") or name:find("premium") or name:find("store") then
+                    pcall(function()
+                        gui:Destroy() -- حذفها نهائياً
+                    end)
                 end
             end
         end
-    end
-
-    -- 2. فتح وتعديل جميع أزرار التفاعل (ProximityPrompts) حتى لو كانت مقفلة خلف جيم باس
-    for _, prompt in ipairs(Workspace:GetDescendants()) do
-        if prompt:IsA("ProximityPrompt") then
-            prompt.RequiresLineOfSight = false -- التفاعل حتى لو كان خلف جدار
-            prompt.MaxActivationDistance = 35  -- زيادة مدى التفاعل لمسافة بعيدة
-            prompt.HoldDuration = 0            -- جعل التفعيل فورياً بدون انتظار
-        end
-    end
-    
-    -- 3. محاولة محاكاة امتلاك الأدوات الأساسية إذا كانت مخزنة في الـ ReplicatedStorage
-    local repStorage = game:GetService("ReplicatedStorage")
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    if backpack then
-        for _, obj in ipairs(repStorage:GetDescendants()) do
-            if obj:IsA("Tool") and not backpack:FindFirstChild(obj.Name) then
-                -- نسخ الأداة إلى حقيبتك محلياً لتجربة تشغيلها
-                pcall(function()
-                    local clone = obj:Clone()
-                    clone.Parent = backpack
-                end)
+        
+        -- 2. إيقاف ظهور واجهات جديدة (الناتجة عن الـ Popups التلقائية)
+        pGui.DescendantAdded:Connect(function(descendant)
+            task.wait() -- انتظار جزء من الثانية للتأكد من تحميل الاسم
+            if descendant:IsA("Frame") or descendant:IsA("ImageLabel") or descendant:IsA("TextLabel") or descendant:IsA("ScrollingFrame") then
+                local name = descendant.Name:lower()
+                if name:find("shop") or name:find("buy") or name:find("pass") or name:find("purchase") or name:find("premium") or name:find("store") then
+                    pcall(function()
+                        descendant:Destroy() -- حذف أي واجهة جديدة فوراً
+                    end)
+                end
             end
-        end
+        end)
     end
 end
 
@@ -147,13 +142,14 @@ BackwardBtn.MouseButton1Click:Connect(function()
     phaseThroughWall("backward")
 end)
 
-BypassObjectsBtn.MouseButton1Click:Connect(function()
-    bypassMapObjects()
-    BypassObjectsBtn.Text = "تم التعديل وجلب الأدوات!"
-    BypassObjectsBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 40)
+BlockPassesBtn.MouseButton1Click:Connect(function()
+    blockGamepasses()
+    BlockPassesBtn.Text = "تم حظر واجهات الشراء!"
+    BlockPassesBtn.BackgroundColor3 = Color3.fromRGB(40, 100, 40)
+    BlockPassesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     
-    -- إعادة المحاولة بعد 3 ثواني تلقائياً للأغراض الجديدة التي ترسبن
-    task.wait(3)
-    BypassObjectsBtn.Text = "تخطي حماية الأغراض والأزرار"
-    BypassObjectsBtn.BackgroundColor3 = Color3.fromRGB(30, 144, 255)
+    task.wait(2)
+    BlockPassesBtn.Text = "إزالة واجهات الشراء نهائياً"
+    BlockPassesBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    BlockPassesBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
 end)
