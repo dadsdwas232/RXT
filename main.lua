@@ -1,362 +1,474 @@
 --[[
-    =========================================
-    [+] Script Name: K V N Premium Hub
-    [+] Supported: Exploits / Executors
-    [+] Creator: K V N
-    =========================================
+    Script Name: KVN Hub (Advanced AIMBOT + ESP)
+    Supported Executor: Any external (Synapse X, Krnl, ScriptWare, etc.)
+    Rights: K V N
 --]]
 
+-- Services
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
 
--- تفعيل الميزات واختياراتها
-local Settings = {
-    AimbotEnabled = false,
-    AimPart = "Head", -- الخيارات: "Head", "Abdomen", "Random"
-    MaxDistance = 30, -- المسافة المحددة (30 متر)
-    EspEnabled = false,
-    InventoryEspEnabled = false,
-    Friends = {} -- قائمة الأصدقاء (يتم إدخال أسماء اللاعبين هنا)
-}
+-- Player
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-------------------------------------------------------------------------
--- [1] بناء واجهة المستخدم (GUI) بحقوق K V N
-------------------------------------------------------------------------
+-- Variables
+local AimlockEnabled = false
+local ESPEnabled = false
+local InventoryESPEnabled = false
+local AimPart = "Head" -- Default: Head, Body, Random
+local FriendList = {}
+local Target = nil
+local ESPObjects = {}
+local InventoryObjects = {}
 
+-- UI Elements
 local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local DragButton = Instance.new("TextButton")
+local CloseButton = Instance.new("TextButton")
+local OpenButton = Instance.new("TextButton")
+local ContentFrame = Instance.new("Frame")
+
+-- Buttons
+local AimButton = Instance.new("TextButton")
+local AimBodyButton = Instance.new("TextButton")
+local AimHeadButton = Instance.new("TextButton")
+local AimRandomButton = Instance.new("TextButton")
+local ESPToggle = Instance.new("TextButton")
+local InventoryToggle = Instance.new("TextButton")
+local FriendListButton = Instance.new("TextButton")
+
+-- UI Config
 ScreenGui.Name = "KVN_Hub"
 ScreenGui.Parent = CoreGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.ResetOnSpawn = false
 
--- اللوحة الرئيسية (Main Frame)
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 320, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -160, 0.5, -210)
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.Size = UDim2.new(0, 350, 0, 450)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -225)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true -- ميزة السحب بحرية
+MainFrame.BackgroundTransparency = 0.1
 MainFrame.Parent = ScreenGui
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 8)
-UICorner.Parent = MainFrame
+-- Dragging logic
+local dragging = false
+local dragInput, dragStart, startPos
 
--- العنوان والحقوق
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Title.Text = "K V N  |  PREMIUM HUB"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
-Title.Parent = MainFrame
+DragButton.Size = UDim2.new(1, 0, 0, 30)
+DragButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+DragButton.Text = "KVN HUB [DRAG]"
+DragButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+DragButton.Parent = MainFrame
 
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 8)
-TitleCorner.Parent = Title
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Parent = MainFrame
 
--- حاوية الأزرار لتنظيمها بشكل تلقائي
-local Container = Instance.new("ScrollingFrame")
-Container.Size = UDim2.new(1, -20, 1, -60)
-Container.Position = UDim2.new(0, 10, 0, 50)
-Container.BackgroundTransparency = 1
-Container.ScrollBarThickness = 4
-Container.Parent = MainFrame
+OpenButton.Size = UDim2.new(0, 60, 0, 60)
+OpenButton.Position = UDim2.new(0, 10, 0.5, -30)
+OpenButton.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+OpenButton.Text = "OPEN"
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.Visible = false
+OpenButton.Parent = ScreenGui
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.Padding = UDim.new(0, 8)
-UIListLayout.Parent = Container
+ContentFrame.Size = UDim2.new(1, 0, 1, -30)
+ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.Parent = MainFrame
 
--- دالة مساعدة لإنشاء الأزرار بسلاسة
-local function CreateToggleButton(name, text, default, callback)
-    local Button = Instance.new("TextButton")
-    Button.Name = name
-    Button.Size = UDim2.new(1, 0, 0, 40)
-    Button.Font = Enum.Font.GothamSemibold
-    Button.TextSize = 14
-    Button.BorderSizePixel = 0
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = Button
+-- Aim Button
+AimButton.Size = UDim2.new(0, 200, 0, 40)
+AimButton.Position = UDim2.new(0.5, -100, 0, 10)
+AimButton.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+AimButton.Text = "AIMBOT [OFF]"
+AimButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimButton.Parent = ContentFrame
 
-    local state = default
-    local function update()
-        if state then
-            Button.BackgroundColor3 = Color3.fromRGB(46, 204, 113) -- أخضر تفعيل
-            Button.Text = text .. " [ON]"
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        else
-            Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45) -- رمادي تعطيل
-            Button.Text = text .. " [OFF]"
-            Button.TextColor3 = Color3.fromRGB(200, 200, 200)
-        end
-    end
-    
-    Button.MouseButton1Click:Connect(function()
-        state = not state
-        update()
-        callback(state)
-    end)
-    
-    update()
-    Button.Parent = Container
-    return Button
+-- Body part selection
+AimBodyButton.Size = UDim2.new(0, 100, 0, 30)
+AimBodyButton.Position = UDim2.new(0, 10, 0, 60)
+AimBodyButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+AimBodyButton.Text = "Body"
+AimBodyButton.Parent = ContentFrame
+
+AimHeadButton.Size = UDim2.new(0, 100, 0, 30)
+AimHeadButton.Position = UDim2.new(0, 120, 0, 60)
+AimHeadButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+AimHeadButton.Text = "Head"
+AimHeadButton.Parent = ContentFrame
+
+AimRandomButton.Size = UDim2.new(0, 100, 0, 30)
+AimRandomButton.Position = UDim2.new(0, 230, 0, 60)
+AimRandomButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+AimRandomButton.Text = "Random"
+AimRandomButton.Parent = ContentFrame
+
+-- ESP Toggle
+ESPToggle.Size = UDim2.new(0, 200, 0, 40)
+ESPToggle.Position = UDim2.new(0.5, -100, 0, 110)
+ESPToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+ESPToggle.Text = "ESP [OFF]"
+ESPToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPToggle.Parent = ContentFrame
+
+-- Inventory ESP Toggle
+InventoryToggle.Size = UDim2.new(0, 200, 0, 40)
+InventoryToggle.Position = UDim2.new(0.5, -100, 0, 160)
+InventoryToggle.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+InventoryToggle.Text = "INVENTORY ESP [OFF]"
+InventoryToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+InventoryToggle.Parent = ContentFrame
+
+-- Friend List Button
+FriendListButton.Size = UDim2.new(0, 200, 0, 40)
+FriendListButton.Position = UDim2.new(0.5, -100, 0, 210)
+FriendListButton.BackgroundColor3 = Color3.fromRGB(70, 70, 90)
+FriendListButton.Text = "FRIEND LIST (0)"
+FriendListButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+FriendListButton.Parent = ContentFrame
+
+-- Functions
+local function UpdateAimText()
+    local status = AimlockEnabled and "ON" or "OFF"
+    AimButton.Text = "AIMBOT [" .. status .. "]"
 end
 
-------------------------------------------------------------------------
--- [2] إضافة الأزرار والتحكم بالقائمة الفرعية للأيم بوت
-------------------------------------------------------------------------
-
--- تفعيل/تعطيل الأيم بوت
-CreateToggleButton("ToggleAimbot", "Aimbot", Settings.AimbotEnabled, function(val)
-    Settings.AimbotEnabled = val
-end)
-
--- أزرار تحديد مكان شبك الأيم بوت (Dropdown محاكي)
-local TargetPanel = Instance.new("Frame")
-TargetPanel.Size = UDim2.new(1, 0, 0, 35)
-TargetPanel.BackgroundTransparency = 1
-TargetPanel.Parent = Container
-
-local UIListHorizontal = Instance.new("UIListLayout")
-UIListHorizontal.FillDirection = Enum.FillDirection.Horizontal
-UIListHorizontal.Padding = UDim.new(0, 5)
-UIListHorizontal.Parent = TargetPanel
-
-local function CreatePartButton(partName, displayName)
-    local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(0.31, 0, 1, 0)
-    Btn.BackgroundColor3 = Settings.AimPart == partName and Color3.fromRGB(52, 152, 219) or Color3.fromRGB(40, 40, 40)
-    Btn.Text = displayName
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.Font = Enum.Font.Gotham
-    Btn.TextSize = 12
-    
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, 4)
-    c.Parent = Btn
-    
-    Btn.MouseButton1Click:Connect(function()
-        Settings.AimPart = partName
-        for _, v in pairs(TargetPanel:GetChildren()) do
-            if v:IsA("TextButton") then
-                v.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            end
-        end
-        Btn.BackgroundColor3 = Color3.fromRGB(52, 152, 219) -- أزرق عند الاختيار
-    end)
-    Btn.Parent = TargetPanel
+local function UpdateESPText()
+    ESPToggle.Text = ESPEnabled and "ESP [ON]" or "ESP [OFF]"
 end
 
-CreatePartButton("Head", "الرأس")
-CreatePartButton("Abdomen", "البطن")
-CreatePartButton("Random", "عشوائي")
+local function UpdateInventoryText()
+    InventoryToggle.Text = InventoryESPEnabled and "INVENTORY ESP [ON]" or "INVENTORY ESP [OFF]"
+end
 
--- تفعيل/تعطيل الـ ESP والجدران
-CreateToggleButton("ToggleESP", "Wall ESP", Settings.EspEnabled, function(val)
-    Settings.EspEnabled = val
-end)
-
--- تفعيل/تعطيل كشف الـ Inventory مع الألوان والأسماء الأصلية
-CreateToggleButton("ToggleInvESP", "Show Inventory Items", Settings.InventoryEspEnabled, function(val)
-    Settings.InventoryEspEnabled = val
-end)
-
--- إدخال وإدارة قائمة الأصدقاء (Friend List GUI)
-local FriendInput = Instance.new("TextBox")
-FriendInput.Size = UDim2.new(1, 0, 0, 35)
-FriendInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-FriendInput.PlaceholderText = "اكتب اسم اللاعب لإضافته للأصدقاء..."
-FriendInput.Text = ""
-FriendInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-FriendInput.Font = Enum.Font.Gotham
-FriendInput.TextSize = 12
-local fC = Instance.new("UICorner") fC.CornerRadius = UDim.new(0, 4) fC.Parent = FriendInput
-FriendInput.Parent = Container
-
-FriendInput.FocusLost:Connect(function(enterPressed)
-    if enterPressed and FriendInput.Text ~= "" then
-        local targetName = FriendInput.Text
-        Settings.Friends[targetName] = true
-        FriendInput.Text = "تمت إضافة: " .. targetName
-        task.wait(1)
-        FriendInput.Text = ""
+local function IsFriend(plr)
+    for _, v in pairs(FriendList) do
+        if v == plr.Name then return true end
     end
-end)
-
--- ميزة إخفاء وإظهار الواجهة عبر زر LeftControl
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.LeftControl then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-
-
-------------------------------------------------------------------------
--- [3] المنطق البرمجي: الأيم بوت (Aimbot) بمسافة 30 متر وضد الأصدقاء
-------------------------------------------------------------------------
+    return false
+end
 
 local function GetClosestPlayer()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChildOfClass("Humanoid") and player.Character.Humanoid.Health > 0 then
-            
-            -- التحقق من قائمة الأصدقاء (تخطي إذا كان صديقاً)
-            if Settings.Friends[player.Name] then continue end
-
-            -- حساب المسافة الحقيقية بالمتر (Studs / 3.57 تعادل المتر تقريباً، وهنا وضعنا 100 ستاود لتساوي 30 متر بدقة)
-            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if distance <= 100 then -- 100 Studs = حوالي 28-30 متر داخل روبلوكس
-                
-                -- حساب المسافة على الشاشة بالنسبة للماوس
-                local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+    local closest = nil
+    local shortestDistance = 30 -- 30 meters max
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 and not IsFriend(v) then
+            local part = v.Character.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToScreenPoint(part.Position)
+            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - part.Position).Magnitude
+            if distance <= shortestDistance then
+                local screenPos, onScreen = Camera:WorldToScreenPoint(part.Position)
                 if onScreen then
-                    local mousePos = UserInputService:GetMouseLocation()
-                    local mouseDistance = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
-                    
-                    if mouseDistance < shortestDistance then
-                        closestPlayer = player
-                        shortestDistance = mouseDistance
-                    end
+                    shortestDistance = distance
+                    closest = v
                 end
             end
         end
     end
-    return closestPlayer
+    return closest
 end
 
--- تشغيل الأيم بوت عند الضغط المطول على الماوس الأيمن
-local Aiming = false
-UserInputService.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        Aiming = true
+local function GetAimPart(character)
+    if AimPart == "Head" then
+        return character:FindFirstChild("Head")
+    elseif AimPart == "Body" then
+        return character:FindFirstChild("UpperTorso") or character:FindFirstChild("HumanoidRootPart")
+    elseif AimPart == "Random" then
+        local parts = {"Head", "UpperTorso", "LowerTorso", "HumanoidRootPart"}
+        local chosen = parts[math.random(1, #parts)]
+        return character:FindFirstChild(chosen)
     end
-end)
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then
-        Aiming = false
-    end
-end)
+    return character:FindFirstChild("Head")
+end
 
+-- AIMBOT Logic
 RunService.RenderStepped:Connect(function()
-    if Settings.AimbotEnabled and Aiming then
-        local target = GetClosestPlayer()
-        if target and target.Character then
-            local aimPartName = Settings.AimPart
-            
-            -- ميزة العشوائي للجسم بالكامل
-            if aimPartName == "Random" then
-                local parts = {"Head", "UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm"}
-                aimPartName = parts[math.random(1, #parts)]
-            elseif aimPartName == "Abdomen" then
-                aimPartName = target.Character:FindFirstChild("LowerTorso") and "LowerTorso" or "Torso"
-            end
-            
-            local targetPart = target.Character:FindFirstChild(aimPartName)
-            if targetPart then
-                workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, targetPart.Position)
+    if AimlockEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local targetPlayer = GetClosestPlayer()
+        if targetPlayer and targetPlayer.Character then
+            local aimPart = GetAimPart(targetPlayer.Character)
+            if aimPart then
+                local screenPos, onScreen = Camera:WorldToScreenPoint(aimPart.Position)
+                if onScreen then
+                    mousemoveabs(screenPos.X, screenPos.Y)
+                end
             end
         end
     end
 end)
 
+-- ESP Drawing
+local function CreateESP(player)
+    if ESPObjects[player] then return end
+    local billboard = Instance.new("BillboardGui")
+    local textLabel = Instance.new("TextLabel")
+    
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.AlwaysOnTop = true
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.Parent = player.Character
+    
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = player.Name .. "\n" .. (player.Character and player.Character:FindFirstChild("Humanoid") and math.floor(player.Character.Humanoid.Health) or "Dead")
+    textLabel.TextColor3 = IsFriend(player) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.TextScaled = true
+    textLabel.Parent = billboard
+    
+    ESPObjects[player] = billboard
+end
 
-------------------------------------------------------------------------
--- [4] المنطق البرمجي: الرادار والـ ESP والـ Inventory لكل الناس
-------------------------------------------------------------------------
+local function RemoveESP(player)
+    if ESPObjects[player] then
+        ESPObjects[player]:Destroy()
+        ESPObjects[player] = nil
+    end
+end
 
-local function CreateEsp(player)
-    local Highlight = Instance.new("Highlight")
-    Highlight.Name = "KVN_ESP"
-    Highlight.FillColor = Color3.fromRGB(255, 0, 0)
-    Highlight.FillTransparency = 0.5
-    Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    Highlight.OutlineTransparency = 0
-    Highlight.Adornee = player.Character
-    Highlight.Parent = CoreGui
-
-    -- واجهة فوق رأس اللاعب لعرض الـ Inventory والأسماء
-    local Billboard = Instance.new("BillboardGui")
-    Billboard.Name = "KVN_Billboard"
-    Billboard.Size = UDim2.new(0, 200, 0, 50)
-    Billboard.AlwaysOnTop = true
-    Billboard.ExtentsOffset = Vector3.new(0, 3, 0)
-    Billboard.Adornee = player.Character:FindFirstChild("HumanoidRootPart")
-    Billboard.Parent = CoreGui
-
-    local TextLabel = Instance.new("TextLabel")
-    TextLabel.Size = UDim2.new(1, 0, 1, 0)
-    TextLabel.BackgroundTransparency = 1
-    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TextLabel.Font = Enum.Font.GothamBold
-    TextLabel.TextSize = 12
-    TextLabel.TextStrokeTransparency = 0
-    TextLabel.Parent = Billboard
-
-    -- تحديث الـ ESP والأدوات بشكل مستمر
-    local connection
-    connection = RunService.RenderStepped:Connect(function()
-        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
-            Highlight:Destroy()
-            Billboard:Destroy()
-            connection:Disconnect()
-            return
-        end
-
-        -- التحكم بالرؤية عبر الأزرار
-        Highlight.Enabled = Settings.EspEnabled
-        Billboard.Enabled = Settings.EspEnabled
-        
-        if Settings.InventoryEspEnabled then
-            local holding = "Nothing"
-            local tool = player.Character:FindFirstChildOfClass("Tool")
-            
-            -- إذا كان يمسك الأداة في يده، يتم جلب الاسم واللون الأصلي لها
-            if tool then
-                holding = tool.Name
-                -- محاكاة ألوان متناسقة للأدوات لتظهر بنظام "نسخ ولصق" رائع
-                TextLabel.Text = player.Name .. "\n[Holding: " .. holding .. "]"
-                TextLabel.TextColor3 = Color3.fromRGB(241, 196, 15) -- لون ذهبي مميز للأدوات الحاملة
+local function UpdateESP()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
+            if ESPEnabled then
+                CreateESP(v)
             else
-                -- فحص الحقيبة الخلفية إذا لم يكن يحملها بيده
-                local bTool = player:FindFirstChild("Backpack") and player.Backpack:FindFirstChildOfClass("Tool")
-                if bTool then
-                    holding = bTool.Name
-                end
-                TextLabel.Text = player.Name .. "\n[Inv: " .. holding .. "]"
-                TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                RemoveESP(v)
             end
         else
-            TextLabel.Text = player.Name
-            TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            RemoveESP(v)
         end
-    end)
-end
-
--- تفعيل الـ ESP تلقائياً لكل من يدخل السيرفر
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        task.wait(1)
-        CreateEsp(player)
-    end)
-end)
-
-for _, player in pairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        if player.Character then
-            CreateEsp(player)
-        end
-        player.CharacterAdded:Connect(function()
-            task.wait(1)
-            CreateEsp(player)
-        end)
     end
 end
+
+-- Inventory ESP
+local function GetInventoryItems(player)
+    local items = {}
+    if player.Backpack then
+        for _, item in pairs(player.Backpack:GetChildren()) do
+            table.insert(items, item.Name)
+        end
+    end
+    if player.Character then
+        for _, item in pairs(player.Character:GetChildren()) do
+            if item:IsA("Tool") then
+                table.insert(items, item.Name)
+            end
+        end
+    end
+    return items
+end
+
+local function CreateInventoryESP(player)
+    if InventoryObjects[player] then return end
+    local billboard = Instance.new("BillboardGui")
+    local textLabel = Instance.new("TextLabel")
+    
+    billboard.Size = UDim2.new(0, 300, 0, 100)
+    billboard.AlwaysOnTop = true
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+    billboard.Parent = player.Character
+    
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = "Items: " .. table.concat(GetInventoryItems(player), ", ")
+    textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    textLabel.TextScaled = true
+    textLabel.TextWrapped = true
+    textLabel.Parent = billboard
+    
+    InventoryObjects[player] = billboard
+end
+
+local function RemoveInventoryESP(player)
+    if InventoryObjects[player] then
+        InventoryObjects[player]:Destroy()
+        InventoryObjects[player] = nil
+    end
+end
+
+local function UpdateInventoryESP()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character.Humanoid.Health > 0 then
+            if InventoryESPEnabled then
+                CreateInventoryESP(v)
+                -- Update text every 2 seconds
+                if not v.InventoryUpdater then
+                    v.InventoryUpdater = true
+                    spawn(function()
+                        while InventoryESPEnabled and v and v.Character do
+                            wait(2)
+                            if InventoryObjects[v] and InventoryObjects[v]:FindFirstChild("TextLabel") then
+                                InventoryObjects[v].TextLabel.Text = "Items: " .. table.concat(GetInventoryItems(v), ", ")
+                            end
+                        end
+                    end)
+                end
+            else
+                RemoveInventoryESP(v)
+                v.InventoryUpdater = nil
+            end
+        else
+            RemoveInventoryESP(v)
+        end
+    end
+end
+
+-- Loop for ESP updates
+spawn(function()
+    while wait(0.3) do
+        UpdateESP()
+        UpdateInventoryESP()
+    end
+end)
+
+-- Friend List GUI
+local function ShowFriendList()
+    local friendFrame = Instance.new("Frame")
+    local friendListBox = Instance.new("ScrollingFrame")
+    local addButton = Instance.new("TextButton")
+    local inputBox = Instance.new("TextBox")
+    
+    friendFrame.Size = UDim2.new(0, 300, 0, 400)
+    friendFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+    friendFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    friendFrame.BorderSizePixel = 0
+    friendFrame.Parent = ScreenGui
+    
+    friendListBox.Size = UDim2.new(1, -20, 1, -100)
+    friendListBox.Position = UDim2.new(0, 10, 0, 40)
+    friendListBox.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    friendListBox.Parent = friendFrame
+    
+    addButton.Size = UDim2.new(0, 100, 0, 30)
+    addButton.Position = UDim2.new(0, 10, 1, -40)
+    addButton.Text = "Add Friend"
+    addButton.Parent = friendFrame
+    
+    inputBox.Size = UDim2.new(0, 150, 0, 30)
+    inputBox.Position = UDim2.new(0, 120, 1, -40)
+    inputBox.PlaceholderText = "Player Name"
+    inputBox.Parent = friendFrame
+    
+    local function RefreshFriendList()
+        for _, v in pairs(friendListBox:GetChildren()) do
+            if v:IsA("TextButton") then v:Destroy() end
+        end
+        local y = 0
+        for _, name in pairs(FriendList) do
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, 0, 0, 30)
+            btn.Position = UDim2.new(0, 0, 0, y)
+            btn.Text = name .. " [REMOVE]"
+            btn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+            btn.Parent = friendListBox
+            btn.MouseButton1Click:Connect(function()
+                for i, v in pairs(FriendList) do
+                    if v == name then
+                        table.remove(FriendList, i)
+                        break
+                    end
+                end
+                RefreshFriendList()
+                FriendListButton.Text = "FRIEND LIST (" .. #FriendList .. ")"
+            end)
+            y = y + 35
+        end
+        FriendListButton.Text = "FRIEND LIST (" .. #FriendList .. ")"
+    end
+    
+    addButton.MouseButton1Click:Connect(function()
+        if inputBox.Text ~= "" then
+            table.insert(FriendList, inputBox.Text)
+            RefreshFriendList()
+            inputBox.Text = ""
+        end
+    end)
+    
+    RefreshFriendList()
+    
+    friendFrame.ChildRemoved:Connect(function()
+        RefreshFriendList()
+    end)
+    
+    -- Close friend frame after 30 sec or manually
+    wait(30)
+    friendFrame:Destroy()
+end
+
+-- Button Events
+AimButton.MouseButton1Click:Connect(function()
+    AimlockEnabled = not AimlockEnabled
+    UpdateAimText()
+end)
+
+AimBodyButton.MouseButton1Click:Connect(function()
+    AimPart = "Body"
+end)
+
+AimHeadButton.MouseButton1Click:Connect(function()
+    AimPart = "Head"
+end)
+
+AimRandomButton.MouseButton1Click:Connect(function()
+    AimPart = "Random"
+end)
+
+ESPToggle.MouseButton1Click:Connect(function()
+    ESPEnabled = not ESPEnabled
+    UpdateESPText()
+end)
+
+InventoryToggle.MouseButton1Click:Connect(function()
+    InventoryESPEnabled = not InventoryESPEnabled
+    UpdateInventoryText()
+end)
+
+FriendListButton.MouseButton1Click:Connect(function()
+    ShowFriendList()
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    OpenButton.Visible = true
+end)
+
+OpenButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+    OpenButton.Visible = false
+end)
+
+-- Dragging
+DragButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Initial updates
+UpdateAimText()
+UpdateESPText()
+UpdateInventoryText()
