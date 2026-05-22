@@ -1,261 +1,401 @@
---[[ 
-    سكربت ديسنك - قائمة واضحة وجميلة
-    زر تشغيل/اطفاء كبير + خلفية مريحة
+--[[
+    DesyncController v3.0
+    Fixed & Enhanced - Private Use Only
 ]]
 
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local rootPart = character:WaitForChild("HumanoidRootPart")
+-- ========== الخدمات ==========
+local Players        = game:GetService("Players")
+local TweenService   = game:GetService("TweenService")
+local RunService     = game:GetService("RunService")
+local CoreGui        = game:GetService("CoreGui")
 
--- حذف أي قائمة قديمة لو موجودة
-local oldGui = game:GetService("CoreGui"):FindFirstChild("DesyncPanelV2")
+local player    = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local rootPart  = character:WaitForChild("HumanoidRootPart")
+
+-- ========== تنظيف قديم ==========
+local oldGui = CoreGui:FindFirstChild("DesyncPanel_v3")
 if oldGui then oldGui:Destroy() end
 
--- ========== إنشاء القائمة من الصفر ==========
+-- ========== الحالة ==========
+local desyncActive  = false
+local bodyVelocity  = nil
+local bodyGyro      = nil
+local desyncThread  = nil
+
+-- ========== بناء الواجهة ==========
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "DesyncPanelV2"
-screenGui.Parent = game:GetService("CoreGui")
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Name             = "DesyncPanel_v3"
+screenGui.ResetOnSpawn     = false
+screenGui.ZIndexBehavior   = Enum.ZIndexBehavior.Sibling
+screenGui.IgnoreGuiInset   = true
+screenGui.Parent           = CoreGui
 
--- الإطار الرئيسي (خلفية زرقاء داكنة مريحة)
+-- الإطار الرئيسي
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 180)
-mainFrame.Position = UDim2.new(0.5, -175, 0.3, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 25, 45)
-mainFrame.BackgroundTransparency = 0.1
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
+mainFrame.Size                = UDim2.new(0, 360, 0, 190)
+mainFrame.Position            = UDim2.new(0.5, -180, 0.3, 0)
+mainFrame.BackgroundColor3    = Color3.fromRGB(12, 14, 28)
+mainFrame.BackgroundTransparency = 0
+mainFrame.BorderSizePixel     = 0
+mainFrame.ClipsDescendants    = true
+mainFrame.Parent              = screenGui
 
--- زوايا دائرية كبيرة
 local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 20)
+mainCorner.CornerRadius = UDim.new(0, 18)
 mainCorner.Parent = mainFrame
 
--- حدود خارجية زرقاء (stroke)
+-- حد خارجي
 local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(80, 150, 255)
-stroke.Thickness = 2
-stroke.Transparency = 0.5
-stroke.Parent = mainFrame
+stroke.Color       = Color3.fromRGB(70, 140, 255)
+stroke.Thickness   = 1.5
+stroke.Transparency = 0.3
+stroke.Parent      = mainFrame
 
--- تدرج خلفية جميل
+-- تدرج داخلي
 local gradient = Instance.new("UIGradient")
 gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 30, 55)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 20, 40))
+    ColorSequenceKeypoint.new(0,   Color3.fromRGB(18, 22, 45)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(14, 17, 35)),
+    ColorSequenceKeypoint.new(1,   Color3.fromRGB(10, 12, 25)),
 })
+gradient.Rotation = 135
 gradient.Parent = mainFrame
 
--- عنوان كبير
+-- ========== شريط العنوان ==========
+local titleBar = Instance.new("Frame")
+titleBar.Size              = UDim2.new(1, 0, 0, 52)
+titleBar.BackgroundColor3  = Color3.fromRGB(20, 25, 50)
+titleBar.BackgroundTransparency = 0.2
+titleBar.BorderSizePixel   = 0
+titleBar.Parent            = mainFrame
+
+local titleBarCorner = Instance.new("UICorner")
+titleBarCorner.CornerRadius = UDim.new(0, 18)
+titleBarCorner.Parent = titleBar
+
+-- تصحيح الزوايا السفلية للشريط
+local titleBarFix = Instance.new("Frame")
+titleBarFix.Size             = UDim2.new(1, 0, 0, 18)
+titleBarFix.Position         = UDim2.new(0, 0, 1, -18)
+titleBarFix.BackgroundColor3 = Color3.fromRGB(20, 25, 50)
+titleBarFix.BackgroundTransparency = 0.2
+titleBarFix.BorderSizePixel  = 0
+titleBarFix.Parent           = titleBar
+
+-- أيقونة البرق
+local icon = Instance.new("TextLabel")
+icon.Size                = UDim2.new(0, 40, 0, 40)
+icon.Position            = UDim2.new(0, 12, 0.5, -20)
+icon.BackgroundTransparency = 1
+icon.Text                = "⚡"
+icon.TextSize            = 22
+icon.Font                = Enum.Font.GothamBold
+icon.TextColor3          = Color3.fromRGB(80, 160, 255)
+icon.Parent              = titleBar
+
+-- العنوان
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 50)
-title.Position = UDim2.new(0, 0, 0, 0)
+title.Size               = UDim2.new(1, -110, 1, 0)
+title.Position           = UDim2.new(0, 52, 0, 0)
 title.BackgroundTransparency = 1
-title.Text = "⚡ DESYNC CONTROLLER ⚡"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 20
-title.Parent = mainFrame
+title.Text               = "DESYNC CONTROLLER"
+title.TextColor3         = Color3.fromRGB(220, 230, 255)
+title.Font               = Enum.Font.GothamBold
+title.TextSize           = 17
+title.TextXAlignment     = Enum.TextXAlignment.Left
+title.Parent             = titleBar
 
--- خط فاصل جميل
-local line = Instance.new("Frame")
-line.Size = UDim2.new(0.85, 0, 0, 2)
-line.Position = UDim2.new(0.075, 0, 0, 52)
-line.BackgroundColor3 = Color3.fromRGB(80, 150, 255)
-line.BackgroundTransparency = 0.3
-line.Parent = mainFrame
+-- نص الإصدار
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Size            = UDim2.new(0, 35, 0, 16)
+versionLabel.Position        = UDim2.new(0, 52, 0.5, 4)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text            = "v3.0"
+versionLabel.TextColor3      = Color3.fromRGB(80, 100, 160)
+versionLabel.Font            = Enum.Font.Gotham
+versionLabel.TextSize        = 11
+versionLabel.TextXAlignment  = Enum.TextXAlignment.Left
+versionLabel.Parent          = titleBar
 
--- نص الحالة (كبير وواضح)
-local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(0.8, 0, 0, 40)
-statusText.Position = UDim2.new(0.1, 0, 0.4, 0)
-statusText.BackgroundTransparency = 1
-statusText.Text = "🔴 DESYNC: OFF"
-statusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-statusText.Font = Enum.Font.GothamBold
-statusText.TextSize = 18
-statusText.Parent = mainFrame
+-- ========== أزرار شريط العنوان ==========
+-- دالة مساعدة لإنشاء أزرار التحكم
+local function makeTitleBtn(offsetX, txt, color)
+    local btn = Instance.new("TextButton")
+    btn.Size                  = UDim2.new(0, 28, 0, 28)
+    btn.Position              = UDim2.new(1, offsetX, 0.5, -14)
+    btn.BackgroundColor3      = Color3.fromRGB(30, 35, 60)
+    btn.BackgroundTransparency = 0.3
+    btn.Text                  = txt
+    btn.TextColor3            = color
+    btn.Font                  = Enum.Font.GothamBold
+    btn.TextSize              = 14
+    btn.AutoButtonColor       = false
+    btn.Parent                = titleBar
 
--- ========== الزر الرئيسي (كبير وواضح) ==========
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0.7, 0, 0, 55)
-toggleButton.Position = UDim2.new(0.15, 0, 0.68, 0)
-toggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-toggleButton.Text = "🔘 تشغيل الديسنك"
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.TextSize = 18
-toggleButton.Parent = mainFrame
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 8)
+    c.Parent = btn
 
--- زوايا الزر
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 15)
-btnCorner.Parent = toggleButton
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.12), {
+            BackgroundColor3 = color,
+            TextColor3       = Color3.fromRGB(255, 255, 255),
+        }):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.12), {
+            BackgroundColor3 = Color3.fromRGB(30, 35, 60),
+            TextColor3       = color,
+        }):Play()
+    end)
+    return btn
+end
 
--- ظل للزر
-local btnShadow = Instance.new("UIShadow")
-btnShadow.Parent = toggleButton
+local closeBtn    = makeTitleBtn(-12,  "✕", Color3.fromRGB(255, 80,  80))
+local minimizeBtn = makeTitleBtn(-48,  "—", Color3.fromRGB(200, 200, 200))
 
--- تأثير ضوء على الزر عند المرور
-toggleButton.MouseEnter:Connect(function()
-    toggleButton.BackgroundColor3 = Color3.fromRGB(250, 60, 60)
-end)
-toggleButton.MouseLeave:Connect(function()
-    if desyncActive then
-        toggleButton.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+-- ========== نص الحالة ==========
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size             = UDim2.new(1, -30, 0, 32)
+statusLabel.Position         = UDim2.new(0, 15, 0, 60)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text             = "● STATUS:  OFFLINE"
+statusLabel.TextColor3       = Color3.fromRGB(255, 90, 90)
+statusLabel.Font             = Enum.Font.GothamBold
+statusLabel.TextSize         = 15
+statusLabel.TextXAlignment   = Enum.TextXAlignment.Left
+statusLabel.Parent           = mainFrame
+
+-- خط فاصل
+local divider = Instance.new("Frame")
+divider.Size             = UDim2.new(1, -30, 0, 1)
+divider.Position         = UDim2.new(0, 15, 0, 96)
+divider.BackgroundColor3 = Color3.fromRGB(40, 55, 100)
+divider.BorderSizePixel  = 0
+divider.Parent           = mainFrame
+
+-- ========== الزر الرئيسي ==========
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size             = UDim2.new(1, -30, 0, 55)
+toggleBtn.Position         = UDim2.new(0, 15, 0, 108)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 45, 45)
+toggleBtn.Text             = "ACTIVATE  DESYNC"
+toggleBtn.TextColor3       = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font             = Enum.Font.GothamBold
+toggleBtn.TextSize         = 17
+toggleBtn.AutoButtonColor  = false
+toggleBtn.Parent           = mainFrame
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 12)
+toggleCorner.Parent = toggleBtn
+
+-- تدرج الزر
+local btnGradient = Instance.new("UIGradient")
+btnGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0,   Color3.fromRGB(230, 55, 55)),
+    ColorSequenceKeypoint.new(1,   Color3.fromRGB(180, 35, 35)),
+})
+btnGradient.Rotation = 90
+btnGradient.Parent = toggleBtn
+
+-- توهج الزر (إطار شبه شفاف فوقه)
+local btnGlow = Instance.new("Frame")
+btnGlow.Size              = UDim2.new(1, 8, 1, 8)
+btnGlow.Position          = UDim2.new(0, -4, 0, -4)
+btnGlow.BackgroundColor3  = Color3.fromRGB(200, 45, 45)
+btnGlow.BackgroundTransparency = 0.85
+btnGlow.BorderSizePixel   = 0
+btnGlow.ZIndex            = toggleBtn.ZIndex - 1
+btnGlow.Parent            = toggleBtn
+
+local btnGlowCorner = Instance.new("UICorner")
+btnGlowCorner.CornerRadius = UDim.new(0, 16)
+btnGlowCorner.Parent = btnGlow
+
+-- ========== منطق السحب (Drag) ==========
+do
+    local dragging, dragStart, startPos = false, nil, nil
+
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging  = true
+            dragStart = input.Position
+            startPos  = mainFrame.Position
+        end
+    end)
+
+    titleBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+                         input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+-- ========== تصغير / إغلاق ==========
+local minimized     = false
+local fullSize      = UDim2.new(0, 360, 0, 190)
+local minimizedSize = UDim2.new(0, 360, 0, 52)
+
+local function tweenFrame(targetSize)
+    TweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Size = targetSize
+    }):Play()
+end
+
+minimizeBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        tweenFrame(minimizedSize)
+        minimizeBtn.Text = "□"
     else
-        toggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+        tweenFrame(fullSize)
+        minimizeBtn.Text = "—"
     end
-end)
-
--- ========== أزرار التحكم الجانبية ==========
-
--- زر الإغلاق (X)
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 35, 0, 35)
-closeBtn.Position = UDim2.new(1, -45, 0, 10)
-closeBtn.BackgroundTransparency = 1
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 22
-closeBtn.Parent = mainFrame
-
-closeBtn.MouseEnter:Connect(function()
-    closeBtn.TextColor3 = Color3.fromRGB(255, 150, 150)
-end)
-closeBtn.MouseLeave:Connect(function()
-    closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
 end)
 
 closeBtn.MouseButton1Click:Connect(function()
     screenGui.Enabled = not screenGui.Enabled
 end)
 
--- زر تصغير (━)
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 35, 0, 35)
-minimizeBtn.Position = UDim2.new(1, -85, 0, 10)
-minimizeBtn.BackgroundTransparency = 1
-minimizeBtn.Text = "━"
-minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 24
-minimizeBtn.Parent = mainFrame
-
-local minimized = false
-local originalSize = mainFrame.Size
-local originalY = mainFrame.Position
-
-minimizeBtn.MouseEnter:Connect(function()
-    minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-end)
-minimizeBtn.MouseLeave:Connect(function()
-    minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-end)
-
-minimizeBtn.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        mainFrame:TweenSize(UDim2.new(0, 350, 0, 60), "Out", "Quad", 0.3)
-        minimizeBtn.Text = "☐"
-        statusText.Visible = false
-        toggleButton.Visible = false
-        line.Visible = false
-    else
-        mainFrame:TweenSize(originalSize, "Out", "Quad", 0.3)
-        minimizeBtn.Text = "━"
-        wait(0.2)
-        statusText.Visible = true
-        toggleButton.Visible = true
-        line.Visible = true
+-- ========== منطق الديسنك ==========
+local function cleanPhysics()
+    if bodyVelocity and bodyVelocity.Parent then
+        bodyVelocity:Destroy()
     end
-end)
-
--- ========== كود الديسنك ==========
-local desyncActive = false
-local bodyVelocity = nil
-local bodyGyro = nil
-local originalCF = nil
-
-local function freezeBody()
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.Parent = rootPart
-    
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    bodyGyro.CFrame = rootPart.CFrame
-    bodyGyro.Parent = rootPart
+    if bodyGyro and bodyGyro.Parent then
+        bodyGyro:Destroy()
+    end
+    bodyVelocity = nil
+    bodyGyro     = nil
 end
 
-local function unfreezeBody()
-    if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
-    if bodyGyro then bodyGyro:Destroy() bodyGyro = nil end
+local function applyPhysics()
+    cleanPhysics()
+
+    bodyVelocity               = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce      = Vector3.new(1e5, 1e5, 1e5)
+    bodyVelocity.Velocity      = Vector3.zero
+    bodyVelocity.Parent        = rootPart
+
+    bodyGyro               = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque     = Vector3.new(1e5, 1e5, 1e5)
+    bodyGyro.D             = 100
+    bodyGyro.P             = 3000
+    bodyGyro.CFrame        = rootPart.CFrame
+    bodyGyro.Parent        = rootPart
+end
+
+-- تحديث الواجهة
+local function setUI(active)
+    if active then
+        statusLabel.Text       = "● STATUS:  ACTIVE"
+        statusLabel.TextColor3 = Color3.fromRGB(80, 255, 140)
+        toggleBtn.Text         = "DEACTIVATE  DESYNC"
+        TweenService:Create(toggleBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(40, 175, 85)
+        }):Play()
+        TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(40, 175, 85)
+        }):Play()
+        btnGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 200, 100)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 150, 70)),
+        })
+        stroke.Color = Color3.fromRGB(55, 200, 100)
+    else
+        statusLabel.Text       = "● STATUS:  OFFLINE"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+        toggleBtn.Text         = "ACTIVATE  DESYNC"
+        TweenService:Create(toggleBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(200, 45, 45)
+        }):Play()
+        TweenService:Create(btnGlow, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(200, 45, 45)
+        }):Play()
+        btnGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(230, 55, 55)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(180, 35, 35)),
+        })
+        stroke.Color = Color3.fromRGB(70, 140, 255)
+    end
 end
 
 local function startDesync()
+    if desyncActive then return end
     desyncActive = true
-    
-    statusText.Text = "🟢 DESYNC: ON"
-    statusText.TextColor3 = Color3.fromRGB(100, 255, 100)
-    toggleButton.Text = "⭕ إطفاء الديسنك"
-    toggleButton.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-    
-    freezeBody()
-    
-    spawn(function()
+    setUI(true)
+    applyPhysics()
+
+    desyncThread = task.spawn(function()
         while desyncActive do
+            task.wait(0.08)
             pcall(function()
-                -- تغيير ملكية الشبكة
-                rootPart:SetNetworkOwner(nil)
-                wait(0.03)
-                rootPart:SetNetworkOwner(player)
-                wait(0.03)
-                rootPart:SetNetworkOwner(nil)
-                wait(0.03)
-                
-                -- تحريك الجسم بعنف
-                if rootPart then
-                    rootPart.Velocity = Vector3.new(
-                        math.random(-100, 100),
-                        math.random(-50, 50),
-                        math.random(-100, 100)
-                    )
+                if not rootPart or not rootPart.Parent then return end
+
+                -- اهتزاز عشوائي للجسم
+                rootPart.AssemblyLinearVelocity = Vector3.new(
+                    math.random(-120, 120),
+                    math.random( -40,  40),
+                    math.random(-120, 120)
+                )
+
+                -- تحديث الـ BodyGyro لإبقاء الاتجاه
+                if bodyGyro and bodyGyro.Parent then
+                    bodyGyro.CFrame = rootPart.CFrame
                 end
             end)
-            wait(0.1)
         end
     end)
-    
-    print("✅ الديسنك مفعل")
+
+    print("[DesyncController] Activated")
 end
 
 local function stopDesync()
+    if not desyncActive then return end
     desyncActive = false
-    
-    statusText.Text = "🔴 DESYNC: OFF"
-    statusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-    toggleButton.Text = "🔘 تشغيل الديسنك"
-    toggleButton.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
-    
-    unfreezeBody()
-    
+
+    if desyncThread then
+        task.cancel(desyncThread)
+        desyncThread = nil
+    end
+
+    cleanPhysics()
+
     pcall(function()
-        rootPart:SetNetworkOwner(nil)
-        wait(0.1)
-        rootPart:SetNetworkOwner(player)
-        rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-        rootPart.Velocity = Vector3.new(0, 0, 0)
+        if rootPart and rootPart.Parent then
+            rootPart.AssemblyLinearVelocity  = Vector3.zero
+            rootPart.AssemblyAngularVelocity = Vector3.zero
+        end
     end)
-    
-    print("✅ الديسنك متوقف")
+
+    setUI(false)
+    print("[DesyncController] Deactivated")
 end
 
--- ضغط الزر
-toggleButton.MouseButton1Click:Connect(function()
+-- ========== ضغط الزر ==========
+toggleBtn.MouseButton1Click:Connect(function()
+    -- تأثير نبض عند الضغط
+    TweenService:Create(toggleBtn, TweenInfo.new(0.08), {Size = UDim2.new(1, -38, 0, 51)}):Play()
+    task.wait(0.08)
+    TweenService:Create(toggleBtn, TweenInfo.new(0.1), {Size = UDim2.new(1, -30, 0, 55)}):Play()
+
     if desyncActive then
         stopDesync()
     else
@@ -263,36 +403,54 @@ toggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- تحديث الشخصية عند الموت
+-- تأثيرات hover للزر الرئيسي
+toggleBtn.MouseEnter:Connect(function()
+    TweenService:Create(toggleBtn, TweenInfo.new(0.12), {
+        BackgroundTransparency = 0.15
+    }):Play()
+end)
+toggleBtn.MouseLeave:Connect(function()
+    TweenService:Create(toggleBtn, TweenInfo.new(0.12), {
+        BackgroundTransparency = 0
+    }):Play()
+end)
+
+-- ========== إعادة الشخصية ==========
 player.CharacterAdded:Connect(function(newChar)
-    character = newChar
-    rootPart = character:WaitForChild("HumanoidRootPart")
-    
+    local wasActive = desyncActive
+
     if desyncActive then
         stopDesync()
-        wait(0.2)
+    end
+
+    character = newChar
+    rootPart  = newChar:WaitForChild("HumanoidRootPart")
+
+    if wasActive then
+        task.wait(0.3)
         startDesync()
     end
 end)
 
--- ========== تأثير ظهور القائمة (حركة جميلة) ==========
+-- ========== حركة ظهور القائمة ==========
+mainFrame.Size               = UDim2.new(0, 0,   0, 0)
 mainFrame.BackgroundTransparency = 1
-mainFrame.Size = UDim2.new(0, 0, 0, 180)
-mainFrame.Position = UDim2.new(0.5, 0, 0.3, 0)
+mainFrame.Position           = UDim2.new(0.5, 0, 0.3, 0)
 
-game:GetService("TweenService"):Create(
-    mainFrame,
-    TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-    {Size = UDim2.new(0, 350, 0, 180), Position = UDim2.new(0.5, -175, 0.3, 0)}
-):Play()
-
-for i = 0, 1, 0.05 do
-    mainFrame.BackgroundTransparency = 0.1 * (1 - i) + 0.9 * i
-    wait(0.01)
-end
+task.spawn(function()
+    task.wait(0.05)
+    TweenService:Create(mainFrame,
+        TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+        {
+            Size                    = fullSize,
+            Position                = UDim2.new(0.5, -180, 0.3, 0),
+            BackgroundTransparency  = 0,
+        }
+    ):Play()
+end)
 
 print("══════════════════════════════════════")
-print("✅ السكربت شغال | القائمة واضحة وجاهزة")
-print("📌 الزر الكبير يشغل ويطفئ الديسنك")
-print("⚡ DESYNC MODE - للأغراض التعليمية")
+print(" DesyncController v3.0  —  Ready")
+print(" Drag the title bar to move the panel")
+print(" [X] hides | [—] minimizes")
 print("══════════════════════════════════════")
