@@ -1,529 +1,504 @@
---[[
-    سكربت ديسنك متكامل 2026
-    يجمع بين تقنيات: FastFlag Manipulation + Network Ownership Exploitation + Lag Switching
-    مع واجهة مستخدم احترافية للتحكم الكامل
+--[[ 
+    💀 ULTIMATE DESYNC X  💀
+    يجمع بين أقوى 5 تقنيات ديسنك:
+    - RakNet Desync (متطلب المشغل)
+    - FastFlag Physics Break
+    - Glitch Mode (شخصية متشنجة)
+    - Lag Switch 
+    - Advanced Network Abuse
+    - Void Mode & No Respawn Lock
+
+    !! تنبيه: بعض الميزات تحتاج مشغل يدعمها مثل Delta Executor !!
 ]]
 
-local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local rootPart = character:WaitForChild("HumanoidRootPart")
-local humanoid = character:WaitForChild("Humanoid")
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local RootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
--- حذف أي واجهة قديمة
-local oldGui = game:GetService("CoreGui"):FindFirstChild("UltimateDesyncPanel")
+-- منع تكرار التشغيل
+local oldGui = game:GetService("CoreGui"):FindFirstChild("UltimateDesyncPanelX")
 if oldGui then oldGui:Destroy() end
 
--- ================ الواجهة الرسومية الرئيسية ================
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "UltimateDesyncPanel"
-screenGui.Parent = game:GetService("CoreGui")
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- =================== GUI المتطورة ===================
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "UltimateDesyncPanelX"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ResetOnSpawn = false
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 380, 0, 250)
-mainFrame.Position = UDim2.new(0.5, -190, 0.25, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
-mainFrame.BackgroundTransparency = 0.08
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = screenGui
+-- الإطار الرئيسي العائم
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 420, 0, 320)
+MainFrame.Position = UDim2.new(0.5, -210, 0.25, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.15
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 16)
-mainCorner.Parent = mainFrame
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 20)
+Corner.Parent = MainFrame
 
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(100, 100, 255)
-stroke.Thickness = 1.5
-stroke.Transparency = 0.6
-stroke.Parent = mainFrame
+local Shadow = Instance.new("UIShadow")
+Shadow.Parent = MainFrame
 
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 45)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 32))
+local Gradient = Instance.new("UIGradient")
+Gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 35)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(5, 5, 20))
 })
-gradient.Parent = mainFrame
+Gradient.Parent = MainFrame
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 45)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "🎛️ ULTIMATE DESYNC CONTROLLER"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 17
-title.Parent = mainFrame
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 45)
+Title.BackgroundTransparency = 1
+Title.Text = "💀 ULTIMATE DESYNC X | STATUS: 🔴"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = MainFrame
 
-local line = Instance.new("Frame")
-line.Size = UDim2.new(0.9, 0, 0, 1.5)
-line.Position = UDim2.new(0.05, 0, 0, 48)
-line.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
-line.BackgroundTransparency = 0.4
-line.Parent = mainFrame
+local Line = Instance.new("Frame")
+Line.Size = UDim2.new(0.9, 0, 0, 1)
+Line.Position = UDim2.new(0.05, 0, 0, 48)
+Line.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+Line.BackgroundTransparency = 0.5
+Line.Parent = MainFrame
 
--- حالة الديسنك
-local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(0.9, 0, 0, 35)
-statusText.Position = UDim2.new(0.05, 0, 0.22, 0)
-statusText.BackgroundTransparency = 1
-statusText.Text = "🔴 DESYNC: OFF"
-statusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-statusText.Font = Enum.Font.GothamBold
-statusText.TextSize = 16
-statusText.Parent = mainFrame
+-- إحصائيات حية
+local PingLabel = Instance.new("TextLabel")
+PingLabel.Size = UDim2.new(0.5, 0, 0, 25)
+PingLabel.Position = UDim2.new(0.05, 0, 0.18, 0)
+PingLabel.BackgroundTransparency = 1
+PingLabel.Text = "📡 Ping: -- ms"
+PingLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+PingLabel.Font = Enum.Font.Gotham
+PingLabel.TextSize = 12
+PingLabel.TextXAlignment = Enum.TextXAlignment.Left
+PingLabel.Parent = MainFrame
 
--- معلومات إضافية (البينغ - زمن الاستجابة)
-local pingText = Instance.new("TextLabel")
-pingText.Size = UDim2.new(0.45, 0, 0, 25)
-pingText.Position = UDim2.new(0.05, 0, 0.38, 0)
-pingText.BackgroundTransparency = 1
-pingText.Text = "📡 Ping: -- ms"
-pingText.TextColor3 = Color3.fromRGB(180, 180, 200)
-pingText.Font = Enum.Font.Gotham
-pingText.TextSize = 12
-pingText.TextXAlignment = Enum.TextXAlignment.Left
-pingText.Parent = mainFrame
+local ModeLabel = Instance.new("TextLabel")
+ModeLabel.Size = UDim2.new(0.5, 0, 0, 25)
+ModeLabel.Position = UDim2.new(0.5, 0, 0.18, 0)
+ModeLabel.BackgroundTransparency = 1
+ModeLabel.Text = "⚙️ Mode: None"
+ModeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+ModeLabel.Font = Enum.Font.Gotham
+ModeLabel.TextSize = 12
+ModeLabel.TextXAlignment = Enum.TextXAlignment.Left
+ModeLabel.Parent = MainFrame
 
--- معلومات إضافية (طريقة الديسنك النشطة)
-local methodText = Instance.new("TextLabel")
-methodText.Size = UDim2.new(0.5, 0, 0, 25)
-methodText.Position = UDim2.new(0.45, 0, 0.38, 0)
-methodText.BackgroundTransparency = 1
-methodText.Text = "⚙️ Method: None"
-methodText.TextColor3 = Color3.fromRGB(180, 180, 200)
-methodText.Font = Enum.Font.Gotham
-methodText.TextSize = 12
-methodText.TextXAlignment = Enum.TextXAlignment.Left
-methodText.Parent = mainFrame
+-- =================== أزرار الميزات ===================
+local Functions = {
+    RakNet = {Name = "🌀 RakNet Desync", Active = false, Button = nil},
+    FastFlag = {Name = "⚡ FastFlag Break", Active = false, Button = nil},
+    Glitch = {Name = "👾 Glitch Mode", Active = false, Button = nil},
+    LagSwitch = {Name = "🐌 Lag Switch", Active = false, Button = nil},
+    NetworkAbuse = {Name = "🌐 Network Abuse", Active = false, Button = nil},
+    VoidMode = {Name = "🕳️ Void Mode", Active = false, Button = nil},
+    NoRespawn = {Name = "☠️ No Respawn", Active = false, Button = nil},
+    SlowPlayers = {Name = "🐢 Slow Others", Active = false, Button = nil}
+}
 
--- ================ أزرار اختيار طريقة الديسنك ================
+local function CreateButton(funcKey, yPos)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(0.44, 0, 0, 32)
+    Btn.Position = UDim2.new(0.05 + (funcKey:find("RakNet") and 0 or 0.51), 0, yPos, 0)
+    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+    Btn.Text = Functions[funcKey].Name
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 12
+    Btn.Parent = MainFrame
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 8)
+    BtnCorner.Parent = Btn
+    Functions[funcKey].Button = Btn
+    return Btn
+end
 
--- زر الطريقة الأولى: FastFlag (علامات التطوير السريع)
-local fflagButton = Instance.new("TextButton")
-fflagButton.Size = UDim2.new(0.28, 0, 0, 35)
-fflagButton.Position = UDim2.new(0.05, 0, 0.55, 0)
-fflagButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-fflagButton.Text = "🧠 FFlag Mode"
-fflagButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-fflagButton.Font = Enum.Font.GothamBold
-fflagButton.TextSize = 12
-fflagButton.Parent = mainFrame
+-- ترتيب الأزرار
+CreateButton("RakNet", 0.28)
+CreateButton("FastFlag", 0.28)
+CreateButton("Glitch", 0.4)
+CreateButton("LagSwitch", 0.4)
+CreateButton("NetworkAbuse", 0.52)
+CreateButton("VoidMode", 0.52)
+CreateButton("NoRespawn", 0.64)
+CreateButton("SlowPlayers", 0.64)
 
-local fflagCorner = Instance.new("UICorner")
-fflagCorner.CornerRadius = UDim.new(0, 8)
-fflagCorner.Parent = fflagButton
+-- زر تفعيل الكل (Emergency Panic)
+local PanicBtn = Instance.new("TextButton")
+PanicBtn.Size = UDim2.new(0.92, 0, 0, 38)
+PanicBtn.Position = UDim2.new(0.04, 0, 0.78, 0)
+PanicBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+PanicBtn.Text = "💀 ACTIVATE ALL / PANIC OFF"
+PanicBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+PanicBtn.Font = Enum.Font.GothamBold
+PanicBtn.TextSize = 14
+PanicBtn.Parent = MainFrame
+local PanicCorner = Instance.new("UICorner")
+PanicCorner.CornerRadius = UDim.new(0, 10)
+PanicCorner.Parent = PanicBtn
 
--- زر الطريقة الثانية: Network (ملكية الشبكة)
-local networkButton = Instance.new("TextButton")
-networkButton.Size = UDim2.new(0.28, 0, 0, 35)
-networkButton.Position = UDim2.new(0.36, 0, 0.55, 0)
-networkButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-networkButton.Text = "🌐 Net Mode"
-networkButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-networkButton.Font = Enum.Font.GothamBold
-networkButton.TextSize = 12
-networkButton.Parent = mainFrame
+-- أزرارة التحكم
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 32, 0, 32)
+CloseBtn.Position = UDim2.new(1, -42, 0, 8)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 20
+CloseBtn.Parent = MainFrame
 
-local networkCorner = Instance.new("UICorner")
-networkCorner.CornerRadius = UDim.new(0, 8)
-networkCorner.Parent = networkButton
+local MinimizeBtn = Instance.new("TextButton")
+MinimizeBtn.Size = UDim2.new(0, 32, 0, 32)
+MinimizeBtn.Position = UDim2.new(1, -80, 0, 8)
+MinimizeBtn.BackgroundTransparency = 1
+MinimizeBtn.Text = "━"
+MinimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+MinimizeBtn.Font = Enum.Font.GothamBold
+MinimizeBtn.TextSize = 22
+MinimizeBtn.Parent = MainFrame
 
--- زر الطريقة الثالثة: RakNet (التأخير المتعمد)
-local raknetButton = Instance.new("TextButton")
-raknetButton.Size = UDim2.new(0.28, 0, 0, 35)
-raknetButton.Position = UDim2.new(0.67, 0, 0.55, 0)
-raknetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-raknetButton.Text = "⏱️ RakNet Mode"
-raknetButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-raknetButton.Font = Enum.Font.GothamBold
-raknetButton.TextSize = 12
-raknetButton.Parent = mainFrame
-
-local raknetCorner = Instance.new("UICorner")
-raknetCorner.CornerRadius = UDim.new(0, 8)
-raknetCorner.Parent = raknetButton
-
--- زر تشغيل/إيقاف الديسنك الرئيسي
-local mainToggleButton = Instance.new("TextButton")
-mainToggleButton.Size = UDim2.new(0.9, 0, 0, 45)
-mainToggleButton.Position = UDim2.new(0.05, 0, 0.75, 0)
-mainToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-mainToggleButton.Text = "▶️ تشغيل الديسنك"
-mainToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-mainToggleButton.Font = Enum.Font.GothamBold
-mainToggleButton.TextSize = 16
-mainToggleButton.Parent = mainFrame
-
-local mainCornerBtn = Instance.new("UICorner")
-mainCornerBtn.CornerRadius = UDim.new(0, 10)
-mainCornerBtn.Parent = mainToggleButton
-
--- أزرار التحكم الجانبية
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 32, 0, 32)
-closeBtn.Position = UDim2.new(1, -42, 0, 8)
-closeBtn.BackgroundTransparency = 1
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 20
-closeBtn.Parent = mainFrame
-
-local minimizeBtn = Instance.new("TextButton")
-minimizeBtn.Size = UDim2.new(0, 32, 0, 32)
-minimizeBtn.Position = UDim2.new(1, -80, 0, 8)
-minimizeBtn.BackgroundTransparency = 1
-minimizeBtn.Text = "━"
-minimizeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-minimizeBtn.Font = Enum.Font.GothamBold
-minimizeBtn.TextSize = 22
-minimizeBtn.Parent = mainFrame
-
--- ================ المتغيرات الأساسية ================
-local desyncActive = false
-local currentMethod = "None"  -- FFlag / Network / RakNet
-local selectedMethod = "FFlag"  -- الطريقة المختارة افتراضياً
-
--- متغيرات FastFlag
-local originalWorldStepMax = nil
-local worldStepChanged = false
-
--- متغيرات Network
-local networkLoop = nil
-local bodyVelocity = nil
-
--- متغيرات RakNet
-local raknetLoop = nil
+-- =================== قلب السكربت (التقنيات المتقدمة) ===================
+local activeMethods = {}
+local loops = {}
 
 -- تحديث البينغ
 local function updatePing()
     local stats = game:GetService("Stats"):FindFirstChild("Network")
     if stats and stats:FindFirstChild("Ping") then
         local ping = math.floor(stats.Ping.Value)
-        pingText.Text = string.format("📡 Ping: %d ms", ping)
+        PingLabel.Text = string.format("📡 Ping: %d ms", ping)
         if ping > 150 then
-            pingText.TextColor3 = Color3.fromRGB(255, 100, 100)
+            PingLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+            MainFrame.BackgroundColor3 = Color3.fromRGB(40, 0, 0)
         elseif ping > 80 then
-            pingText.TextColor3 = Color3.fromRGB(255, 200, 100)
+            PingLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+            MainFrame.BackgroundColor3 = Color3.fromRGB(25, 20, 35)
         else
-            pingText.TextColor3 = Color3.fromRGB(100, 255, 100)
+            PingLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+            MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         end
     end
 end
 
--- تحديث البينغ بشكل دوري
 spawn(function()
-    while wait(1) do
-        updatePing()
-    end
+    while wait(1) do updatePing() end
 end)
 
--- ================ 1. طريقة FFlag Desync ================
--- تعتمد على تغيير إعدادات محرك اللعبة الأساسية لإرباك حسابات الفيزياء والوقت
-local function startFFlagDesync()
-    -- حفظ القيمة الأصلية إن لم تكن محفوظة
-    if originalWorldStepMax == nil then
-        originalWorldStepMax = getfflag("WorldStepMax")
-    end
-    
-    -- تغيير WorldStepMax لقيمة سالبة كبيرة لتعطيل حسابات الفيزياء
-    setfflag("WorldStepMax", "-99999999999999")
-    wait(0.05)
-    setfflag("WorldStepMax", "-1")
-    
-    -- استخدام NextGenReplicator المتقدم لإرباك نظام النسخ المتماثل
-    setfflag("NextGenReplicatorEnabledWrite4", "True")
-    wait(0.04)
-    setfflag("NextGenReplicatorEnabledWrite4", "False")
-    
-    worldStepChanged = true
-end
-
-local function stopFFlagDesync()
-    if originalWorldStepMax then
-        setfflag("WorldStepMax", originalWorldStepMax)
-    end
-    worldStepChanged = false
-end
-
--- ================ 2. طريقة Network Desync ================
--- تستغل ميزة "ملكية الشبكة" لتضليل السيرفر حول موقعك الحقيقي
-local function startNetworkDesync()
-    -- خلق جسم وهمي يبقى ثابتاً في مكانه لإرباك اللاعبين الآخرين
-    local fakeChar = character:Clone()
-    fakeChar.Name = "FakeDesync_" .. player.Name
-    fakeChar.Parent = workspace
-    
-    for _, part in ipairs(fakeChar:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Transparency = 0.9
-            part.Color = Color3.fromRGB(255, 0, 255)
-            part.Material = Enum.Material.Neon
-            part.CanCollide = false
-        elseif part:IsA("Humanoid") then
-            part.PlatformStand = true
-            part.WalkSpeed = 0
-        end
-    end
-    
-    local fakeRoot = fakeChar:FindFirstChild("HumanoidRootPart")
-    if fakeRoot then
-        fakeRoot:SetNetworkOwner(nil)  -- إعطاء ملكية الجسم الوهمي للسيرفر
-    end
-    
-    -- حلقة مستمرة لتعطيل ملكية الشبكة وإعادة تعيينها
-    networkLoop = game:GetService("RunService").RenderStepped:Connect(function()
-        if desyncActive and currentMethod == "Network" then
-            pcall(function()
-                rootPart:SetNetworkOwner(nil)
-                wait(0.02)
-                rootPart:SetNetworkOwner(player)
-                wait(0.02)
-                -- تحديث موقع الجسم الوهمي بعيداً عن موقعك الحقيقي
-                if fakeRoot then
-                    fakeRoot.CFrame = rootPart.CFrame + Vector3.new(0, 50, 0)
-                end
-            end)
-        end
-    end)
-end
-
-local function stopNetworkDesync()
-    if networkLoop then
-        networkLoop:Disconnect()
-        networkLoop = nil
-    end
-    -- تنظيف الجسم الوهمي
-    local fakeChar = workspace:FindFirstChild("FakeDesync_" .. player.Name)
-    if fakeChar then fakeChar:Destroy() end
-    pcall(function()
-        rootPart:SetNetworkOwner(nil)
-        wait(0.1)
-        rootPart:SetNetworkOwner(player)
-    end)
-end
-
--- ================ 3. طريقة RakNet Desync ================
--- تعتمد على مقاطعة وإعادة حزم البيانات الشبكية (Lag Switch)
-local function startRakNetDesync()
-    raknetLoop = game:GetService("RunService").Heartbeat:Connect(function()
-        if desyncActive and currentMethod == "RakNet" then
-            -- خلق تأخيرات متقطعة في الحزمة الشبكية
-            pcall(function()
-                -- إرسال كميات كبيرة من البيانات مؤقتاً لإرباك المعالجة
-                for i = 1, 5 do
-                    local remote = Instance.new("RemoteEvent")
-                    remote.Name = "DesyncBuffer_" .. i
-                    remote.Parent = game:GetService("ReplicatedStorage")
-                    remote:FireServer()
-                    game:GetService("Debris"):AddItem(remote, 0.1)
-                end
-                
-                -- تغيير سرعة الجسم بشكل مفاجئ
-                if rootPart then
-                    rootPart.Velocity = Vector3.new(
-                        math.random(-200, 200),
-                        math.random(-100, 100),
-                        math.random(-200, 200)
-                    )
-                end
-                wait(0.05)
-                
-                -- إعادة تعيين السرعة
-                if rootPart then
-                    rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                end
-            end)
-        end
-    end)
-end
-
-local function stopRakNetDesync()
-    if raknetLoop then
-        raknetLoop:Disconnect()
-        raknetLoop = nil
-    end
-    pcall(function()
-        if rootPart then
-            rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-            rootPart.Velocity = Vector3.new(0, 0, 0)
-        end
-    end)
-end
-
--- ================ وظائف التشغيل والإيقاف العامة ================
-local function startDesync()
-    if desyncActive then return end
-    desyncActive = true
-    
-    statusText.Text = "🟢 DESYNC: ON"
-    statusText.TextColor3 = Color3.fromRGB(100, 255, 100)
-    mainToggleButton.Text = "⏹️ إيقاف الديسنك"
-    mainToggleButton.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
-    
-    if selectedMethod == "FFlag" then
-        currentMethod = "FFlag"
-        methodText.Text = "⚙️ Method: FastFlag"
-        startFFlagDesync()
-    elseif selectedMethod == "Network" then
-        currentMethod = "Network"
-        methodText.Text = "⚙️ Method: Network Ownership"
-        startNetworkDesync()
-    elseif selectedMethod == "RakNet" then
-        currentMethod = "RakNet"
-        methodText.Text = "⚙️ Method: RakNet/Lag Switch"
-        startRakNetDesync()
-    end
-    
-    print("✅ الديسنك مفعل | الطريقة: " .. currentMethod)
-end
-
-local function stopDesync()
-    if not desyncActive then return end
-    desyncActive = false
-    
-    statusText.Text = "🔴 DESYNC: OFF"
-    statusText.TextColor3 = Color3.fromRGB(255, 100, 100)
-    mainToggleButton.Text = "▶️ تشغيل الديسنك"
-    mainToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    methodText.Text = "⚙️ Method: None"
-    
-    if currentMethod == "FFlag" then
-        stopFFlagDesync()
-    elseif currentMethod == "Network" then
-        stopNetworkDesync()
-    elseif currentMethod == "RakNet" then
-        stopRakNetDesync()
-    end
-    
-    currentMethod = "None"
-    print("✅ الديسنك متوقف")
-end
-
--- تبديل الطريقة المختارة
-fflagButton.MouseButton1Click:Connect(function()
-    selectedMethod = "FFlag"
-    fflagButton.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
-    networkButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    raknetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    if desyncActive then
-        stopDesync()
-        wait(0.2)
-        startDesync()
-    end
-end)
-
-networkButton.MouseButton1Click:Connect(function()
-    selectedMethod = "Network"
-    networkButton.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
-    fflagButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    raknetButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    if desyncActive then
-        stopDesync()
-        wait(0.2)
-        startDesync()
-    end
-end)
-
-raknetButton.MouseButton1Click:Connect(function()
-    selectedMethod = "RakNet"
-    raknetButton.BackgroundColor3 = Color3.fromRGB(80, 80, 120)
-    fflagButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    networkButton.BackgroundColor3 = Color3.fromRGB(45, 45, 65)
-    if desyncActive then
-        stopDesync()
-        wait(0.2)
-        startDesync()
-    end
-end)
-
--- الزر الرئيسي
-mainToggleButton.MouseButton1Click:Connect(function()
-    if desyncActive then
-        stopDesync()
+-- 🔥 1. RakNet Desync (يحتاج مشغل مثل Delta)
+local function toggleRakNet(state)
+    if state then
+        local success, res = pcall(function()
+            if getrenv()._G.raknet and getrenv()._G.raknet.desync then
+                getrenv()._G.raknet.desync(true)
+            elseif syn and syn.raknet then
+                syn.raknet.desync(true)
+            else
+                warn("[RakNet] Executor might not support this feature")
+            end
+        end)
+        if not success then warn("[RakNet] Feature not supported in this executor") end
     else
-        startDesync()
+        pcall(function()
+            if getrenv()._G.raknet and getrenv()._G.raknet.desync then
+                getrenv()._G.raknet.desync(false)
+            elseif syn and syn.raknet then
+                syn.raknet.desync(false)
+            end
+        end)
+    end
+end
+
+-- ⚡ 2. FastFlag Break (تعطيل الفيزياء)
+local origWorldStep = nil
+local origPhysicsSender = nil
+local function toggleFastFlag(state)
+    if state then
+        origWorldStep = getfflag("WorldStepMax")
+        origPhysicsSender = getfflag("DFIntS2PhysicsSenderRate")
+        setfflag("WorldStepMax", "-99999999999")
+        setfflag("DFIntS2PhysicsSenderRate", "1")
+        setfflag("FFlagSimIslandizerManager", "false")
+        sethiddenproperty(game:GetService("Workspace"), "PhysicsSenderRate", 1)
+    else
+        if origWorldStep then setfflag("WorldStepMax", origWorldStep) end
+        if origPhysicsSender then setfflag("DFIntS2PhysicsSenderRate", origPhysicsSender) end
+        setfflag("FFlagSimIslandizerManager", "true")
+    end
+end
+
+-- 👾 3. Glitch Mode (تشنج الجسم للسيرفر)
+local glitchLoop = nil
+local function toggleGlitch(state)
+    if state then
+        glitchLoop = RunService.RenderStepped:Connect(function()
+            if activeMethods.Glitch then
+                pcall(function()
+                    local randomVel = Vector3.new(math.random(-150, 150), math.random(-80, 80), math.random(-150, 150))
+                    if RootPart then RootPart.Velocity = randomVel end
+                    wait(0.03)
+                    if RootPart then RootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
+                end)
+            end
+        end)
+    else
+        if glitchLoop then glitchLoop:Disconnect() end
+        pcall(function()
+            if RootPart then
+                RootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                RootPart.Velocity = Vector3.new(0, 0, 0)
+            end
+        end)
+    end
+end
+
+-- 🐌 4. Lag Switch (تقطيع الشبكة)
+local lagLoop = nil
+local function toggleLagSwitch(state)
+    if state then
+        lagLoop = RunService.Heartbeat:Connect(function()
+            if activeMethods.LagSwitch then
+                pcall(function()
+                    for i = 1, 10 do
+                        local remote = Instance.new("RemoteEvent")
+                        remote.Name = "LagBuffer_" .. i
+                        remote.Parent = game:GetService("ReplicatedStorage")
+                        remote:FireServer()
+                        game:GetService("Debris"):AddItem(remote, 0.05)
+                    end
+                end)
+                wait(0.1)
+            end
+        end)
+    else
+        if lagLoop then lagLoop:Disconnect() end
+    end
+end
+
+-- 🌐 5. Network Abuse (تدمير ملكية الشبكة)
+local netLoop = nil
+local fakeChar = nil
+local function toggleNetworkAbuse(state)
+    if state then
+        if fakeChar then fakeChar:Destroy() end
+        fakeChar = Character:Clone()
+        fakeChar.Name = "FakeClone_" .. Player.Name
+        fakeChar.Parent = workspace
+        for _, part in ipairs(fakeChar:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 0.9
+                part.Color = Color3.fromRGB(255, 0, 255)
+                part.Material = Enum.Material.Neon
+                part.CanCollide = false
+            elseif part:IsA("Humanoid") then
+                part.PlatformStand = true
+            end
+        end
+        netLoop = RunService.RenderStepped:Connect(function()
+            if activeMethods.NetworkAbuse then
+                pcall(function()
+                    RootPart:SetNetworkOwner(nil)
+                    wait(0.01)
+                    RootPart:SetNetworkOwner(Player)
+                    if fakeChar and fakeChar:FindFirstChild("HumanoidRootPart") then
+                        fakeChar:SetPrimaryPartCFrame(RootPart.CFrame + Vector3.new(0, 100, 0))
+                    end
+                end)
+            end
+        end)
+    else
+        if netLoop then netLoop:Disconnect() end
+        if fakeChar then fakeChar:Destroy() end
+        pcall(function() RootPart:SetNetworkOwner(nil) wait(0.1) RootPart:SetNetworkOwner(Player) end)
+    end
+end
+
+-- 🕳️ 6. Void Mode (عدم الموت)
+local voidLoop = nil
+local function toggleVoidMode(state)
+    if state then
+        voidLoop = RunService.Stepped:Connect(function()
+            if activeMethods.VoidMode and RootPart and RootPart.Position.Y < 0 then
+                RootPart.CFrame = RootPart.CFrame + Vector3.new(0, 150, 0)
+                if Humanoid.Health > 0 then Humanoid.Health = Humanoid.MaxHealth end
+            end
+        end)
+    else
+        if voidLoop then voidLoop:Disconnect() end
+    end
+end
+
+-- ☠️ 7. No Respawn (يمنع الريسبون)
+local function toggleNoRespawn(state)
+    if state then
+        pcall(function()
+            local resScript = Instance.new("LocalScript")
+            resScript.Name = "AntiRespawn"
+            resScript.Parent = Player.PlayerGui
+            local code = [[
+                local plr = game.Players.LocalPlayer
+                plr.CharacterAdded:Connect(function()
+                    if plr.Character then
+                        plr.Character:BreakJoints()
+                    end
+                end)
+                plr.CharacterAdded:Wait()
+                plr.Character:BreakJoints()
+            ]]
+            resScript.Source = code
+        end)
+    else
+        local anti = Player.PlayerGui:FindFirstChild("AntiRespawn")
+        if anti then anti:Destroy() end
+    end
+end
+
+-- 🐢 8. Slow Players (يبطئ اللاعبين الاخرين - تجريبي)
+local slowLoop = nil
+local function toggleSlowPlayers(state)
+    if state then
+        slowLoop = RunService.RenderStepped:Connect(function()
+            if activeMethods.SlowPlayers then
+                for _, v in ipairs(game.Players:GetPlayers()) do
+                    if v ~= Player and v.Character and v.Character:FindFirstChild("Humanoid") then
+                        v.Character.Humanoid.WalkSpeed = 8
+                        v.Character.Humanoid.JumpPower = 20
+                    end
+                end
+            end
+        end)
+    else
+        if slowLoop then slowLoop:Disconnect() end
+        for _, v in ipairs(game.Players:GetPlayers()) do
+            if v.Character and v.Character:FindFirstChild("Humanoid") then
+                v.Character.Humanoid.WalkSpeed = 16
+                v.Character.Humanoid.JumpPower = 50
+            end
+        end
+    end
+end
+
+-- ربط الوظائف
+local function setMethodState(method, state)
+    activeMethods[method] = state
+    if method == "RakNet" then toggleRakNet(state)
+    elseif method == "FastFlag" then toggleFastFlag(state)
+    elseif method == "Glitch" then toggleGlitch(state)
+    elseif method == "LagSwitch" then toggleLagSwitch(state)
+    elseif method == "NetworkAbuse" then toggleNetworkAbuse(state)
+    elseif method == "VoidMode" then toggleVoidMode(state)
+    elseif method == "NoRespawn" then toggleNoRespawn(state)
+    elseif method == "SlowPlayers" then toggleSlowPlayers(state)
+    end
+end
+
+-- معالجة الأزرار
+for method, data in pairs(Functions) do
+    data.Button.MouseButton1Click:Connect(function()
+        local newState = not data.Active
+        data.Active = newState
+        data.Button.BackgroundColor3 = newState and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(30, 30, 45)
+        setMethodState(method, newState)
+    end)
+end
+
+-- زر الطوارئ
+PanicBtn.MouseButton1Click:Connect(function()
+    local anyActive = false
+    for method, data in pairs(Functions) do
+        if data.Active then anyActive = true break end
+    end
+    if anyActive then
+        for method, data in pairs(Functions) do
+            if data.Active then
+                data.Active = false
+                data.Button.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+                setMethodState(method, false)
+            end
+        end
+        PanicBtn.Text = "💀 ACTIVATE ALL"
+        PanicBtn.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+        Title.Text = "💀 ULTIMATE DESYNC X | STATUS: 🔴"
+        ModeLabel.Text = "⚙️ Mode: None"
+    else
+        for method, data in pairs(Functions) do
+            if not data.Active then
+                data.Active = true
+                data.Button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+                setMethodState(method, true)
+            end
+        end
+        PanicBtn.Text = "💀 PANIC OFF"
+        PanicBtn.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+        Title.Text = "💀 ULTIMATE DESYNC X | STATUS: 🟢"
+        ModeLabel.Text = "⚙️ Mode: ALL ACTIVE"
     end
 end)
 
 -- أزرار التحكم
 local minimized = false
-minimizeBtn.MouseButton1Click:Connect(function()
+MinimizeBtn.MouseButton1Click:Connect(function()
     minimized = not minimized
     if minimized then
-        mainFrame:TweenSize(UDim2.new(0, 380, 0, 55), "Out", "Quad", 0.25)
-        minimizeBtn.Text = "□"
-        statusText.Visible = false
-        pingText.Visible = false
-        methodText.Visible = false
-        fflagButton.Visible = false
-        networkButton.Visible = false
-        raknetButton.Visible = false
-        mainToggleButton.Visible = false
-        line.Visible = false
+        MainFrame:TweenSize(UDim2.new(0, 420, 0, 55), "Out", "Quad", 0.25)
+        MinimizeBtn.Text = "□"
+        for _, data in pairs(Functions) do data.Button.Visible = false end
+        PanicBtn.Visible = false
+        PingLabel.Visible = false
+        ModeLabel.Visible = false
+        Line.Visible = false
     else
-        mainFrame:TweenSize(UDim2.new(0, 380, 0, 250), "Out", "Quad", 0.25)
-        minimizeBtn.Text = "━"
+        MainFrame:TweenSize(UDim2.new(0, 420, 0, 320), "Out", "Quad", 0.25)
+        MinimizeBtn.Text = "━"
         wait(0.15)
-        statusText.Visible = true
-        pingText.Visible = true
-        methodText.Visible = true
-        fflagButton.Visible = true
-        networkButton.Visible = true
-        raknetButton.Visible = true
-        mainToggleButton.Visible = true
-        line.Visible = true
+        for _, data in pairs(Functions) do data.Button.Visible = true end
+        PanicBtn.Visible = true
+        PingLabel.Visible = true
+        ModeLabel.Visible = true
+        Line.Visible = true
     end
 end)
 
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui.Enabled = not screenGui.Enabled
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui.Enabled = not ScreenGui.Enabled
 end)
 
--- إعادة تهيئة المتغيرات عند موت الشخصية
-player.CharacterAdded:Connect(function(newChar)
-    character = newChar
-    rootPart = character:WaitForChild("HumanoidRootPart")
-    humanoid = character:WaitForChild("Humanoid")
-    
-    if desyncActive then
-        local method = currentMethod
-        stopDesync()
-        wait(0.3)
-        if method == "FFlag" then
-            selectedMethod = "FFlag"
-        elseif method == "Network" then
-            selectedMethod = "Network"
-        elseif method == "RakNet" then
-            selectedMethod = "RakNet"
-        end
-        startDesync()
-    end
-end)
-
--- تأثير ظهور القائمة
-mainFrame.BackgroundTransparency = 1
-mainFrame.Size = UDim2.new(0, 0, 0, 250)
-mainFrame.Position = UDim2.new(0.5, 0, 0.25, 0)
-
-game:GetService("TweenService"):Create(
-    mainFrame,
-    TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-    {Size = UDim2.new(0, 380, 0, 250), Position = UDim2.new(0.5, -190, 0.25, 0)}
-):Play()
-
+-- تأثير الانزلاق عند الظهور
+MainFrame.BackgroundTransparency = 1
+MainFrame.Size = UDim2.new(0, 0, 0, 320)
+MainFrame.Position = UDim2.new(0.5, 0, 0.25, 0)
+TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 420, 0, 320),
+    Position = UDim2.new(0.5, -210, 0.25, 0)
+}):Play()
 for i = 0, 1, 0.04 do
-    mainFrame.BackgroundTransparency = 0.08 * (1 - i) + 0.92 * i
+    MainFrame.BackgroundTransparency = 0.15 * (1 - i) + 0.85 * i
     wait(0.01)
 end
 
-updatePing()
+-- إعادة تشغيل السكربت عند موت الشخصية
+Player.CharacterAdded:Connect(function(newChar)
+    Character = newChar
+    RootPart = Character:WaitForChild("HumanoidRootPart")
+    Humanoid = Character:WaitForChild("Humanoid")
+    for method, data in pairs(Functions) do
+        if data.Active then
+            setMethodState(method, false)
+            wait(0.1)
+            setMethodState(method, true)
+        end
+    end
+end)
 
 print("═══════════════════════════════════════════════════════")
-print("✅ السكربت شغال | Ultimate Desync Controller")
-print("📌 اختر طريقة الديسنك المفضلة ثم اضغط تشغيل")
-print("🧠 FFlag Mode - تعطيل حسابات الفيزياء")
-print("🌐 Net Mode - تضليل السيرفر بالجسم الوهمي")
-print("⏱️ RakNet Mode - مقاطعة الحزم الشبكية")
+print("✅ ULTIMATE DESYNC X | جاهز 100%")
+print("⚙️ اضغط على الأزرار لتفعيل الكل أو كل ميزة على حدة")
+print("⚠️ بعض الميزات تحتاج مشغل متطور مثل Delta Executor")
 print("═══════════════════════════════════════════════════════")
